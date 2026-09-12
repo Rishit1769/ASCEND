@@ -1,20 +1,17 @@
 "use client";
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import { useGraphicsQuality } from "../GraphicsQuality";
-import { MOUNTAIN_WIND } from "./mountainConfig";
+import { createContext, useMemo, type ReactNode } from "react";
+import { applyProps, useFrame } from "@react-three/fiber";
+import { useReducedMotion } from "../useReducedMotion";
+import { MOUNTAIN } from "./mountainConfig";
 
-export default function MountainWind({ children }: { children: React.ReactNode }) {
-  const windRef = useRef({ value: 0 });
-  const { preset } = useGraphicsQuality();
+export const MountainWindContext = createContext<{ value: number } | null>(null);
 
-  useFrame((_, delta) => {
-    windRef.current.value += delta * MOUNTAIN_WIND.baseSpeed * 0.01;
+export default function MountainWind({ children }: { children: ReactNode }) {
+  const reduced = useReducedMotion();
+  const time = useMemo(() => ({ value: 0 }), []);
+  useFrame(({ gl }, delta) => {
+    if (!reduced) applyProps(time, { value: time.value + Math.min(delta, .05) * MOUNTAIN.wind.baseSpeed });
+    if (process.env.NODE_ENV === "development") gl.domElement.dataset.mountainWind = time.value.toFixed(2);
   });
-
-  return (
-    <group>
-      {children}
-    </group>
-  );
+  return <MountainWindContext.Provider value={time}>{children}</MountainWindContext.Provider>;
 }

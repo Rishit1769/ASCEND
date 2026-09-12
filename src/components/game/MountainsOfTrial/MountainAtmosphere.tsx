@@ -1,42 +1,33 @@
 "use client";
-import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useMemo } from "react";
+import { useWorldProgress } from "../WorldProgress";
 import { useGraphicsQuality } from "../GraphicsQuality";
-import { MOUNTAIN_ATMOSPHERE } from "./mountainConfig";
-import * as THREE from "three";
+import { checkpointForLevel } from "./mountainConfig";
 
-export default function MountainAtmosphere({ level }: { level: number }) {
-  const { preset } = useGraphicsQuality();
-
-  const atmosphere = useMemo(() => {
-    // Fog density decreases at higher elevations (clearer air)
-    const fogDensity = MOUNTAIN_ATMOSPHERE.fogDensity * (1 - level * 0.008);
-
-    // Sun intensity increases at higher elevations
-    const sunIntensity = MOUNTAIN_ATMOSPHERE.sunIntensity * (0.8 + level * 0.02);
-
-    return {
-      fogColor: MOUNTAIN_ATMOSPHERE.fogColor,
-      fogDensity: Math.max(fogDensity, 0.005),
-      sunIntensity: Math.min(sunIntensity, 4),
-    };
-  }, [level]);
-
-  return (
-    <>
-      <fogExp2 attach="fog" args={[atmosphere.fogColor, atmosphere.fogDensity]} />
-      <directionalLight
-        position={[10, 15, 5]}
-        intensity={atmosphere.sunIntensity}
-        color="#ffe9c8"
-        castShadow
-        shadow-mapSize={preset === "potato" ? [512, 512] : preset === "low" ? [1024, 1024] : [2048, 2048]}
-        shadow-camera-left={-20}
-        shadow-camera-right={20}
-        shadow-camera-top={20}
-        shadow-camera-bottom={-20}
-        shadow-camera-far={60}
-      />
-    </>
-  );
+export default function MountainAtmosphere() {
+  const { level } = useWorldProgress();
+  const { preset, config } = useGraphicsQuality();
+  const checkpoint = checkpointForLevel(level);
+  const fogDensity = useMemo(() => Math.max(.008, .019 - checkpoint.elevation * .00035), [checkpoint.elevation]);
+  const shadow = config.shadowsEnabled ? config.shadowMapSize : [256, 256] as [number, number];
+  return <>
+    <fogExp2 attach="fog" args={["#8fa5af", fogDensity]} />
+    <hemisphereLight args={["#c9dce4", "#343832", .78]} />
+    <directionalLight
+      position={[-18, 28, 18]}
+      intensity={preset === "potato" ? 1.65 : 2.55}
+      color="#ffe0ad"
+      castShadow={config.shadowsEnabled}
+      shadow-mapSize={shadow}
+      shadow-camera-left={-36}
+      shadow-camera-right={36}
+      shadow-camera-top={42}
+      shadow-camera-bottom={-22}
+      shadow-camera-far={115}
+      shadow-bias={-.00008}
+      shadow-normalBias={.04}
+    />
+    <directionalLight position={[12, 14, -35]} intensity={.72} color="#9fbfd3" />
+    <pointLight position={[0, checkpoint.elevation + 3.2, checkpoint.position[2] + 4]} intensity={preset === "potato" ? 0 : 7} distance={16} color="#cfe7ff" />
+  </>;
 }

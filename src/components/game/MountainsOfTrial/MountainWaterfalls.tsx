@@ -1,121 +1,47 @@
 "use client";
-import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import { useGraphicsQuality } from "../GraphicsQuality";
-import { MOUNTAIN_CHECKPOINTS } from "./mountainConfig";
+import { useContext, useMemo } from "react";
 import * as THREE from "three";
+import { useGraphicsQuality } from "../GraphicsQuality";
+import { MountainWindContext } from "./MountainWind";
+import { MOUNTAIN_QUALITY, randomSequence } from "./mountainConfig";
 
-function generateWaterfallGeometry(height: number, width: number, preset: string) {
-  const segments = preset === "potato" ? 4 : preset === "low" ? 6 : preset === "medium" ? 8 : 12;
-  const geometry = new THREE.PlaneGeometry(width, height, segments, segments);
-  const positions = geometry.getAttribute("position");
+const FALLS = [
+  { position: [-22, 17, -38] as [number, number, number], height: 28, width: 2.7, rotation: .22 },
+  { position: [24, 25, -62] as [number, number, number], height: 38, width: 3.2, rotation: -.28 },
+  { position: [9, 30, -83] as [number, number, number], height: 22, width: 1.9, rotation: .04 },
+];
 
-  for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i);
-    const y = positions.getY(i);
-    const z = positions.getZ(i);
-
-    // Water flowing downward with slight waviness
-    const flow = Math.sin(x * 0.3) * 0.02 + Math.cos(z * 0.2) * 0.01;
-    positions.setZ(i, z + flow);
-  }
-
-  positions.needsUpdate = true;
-  geometry.computeVertexNormals();
-  return geometry;
-}
-
-function createWaterfallMaterial(preset: string) {
-  return {
-    color: new THREE.Color("#7fc0d0"),
-    transparent: true,
-    opacity: 0.7,
-    roughness: 0.2,
-  };
-}
-
-function generateMist(position: [number, number, number], count: number, preset: string) {
-  const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(count * 3);
-
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const radius = Math.random() * 1.5;
-    positions[i * 3] = position[0] + Math.cos(angle) * radius;
-    positions[i * 3 + 1] = position[1] + Math.random() * 0.5;
-    positions[i * 3 + 2] = position[2] + Math.sin(angle) * radius;
-  }
-
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  return geometry;
-}
-
-export default function MountainWaterfalls({ level }: { level: number }) {
-  const { preset } = useGraphicsQuality();
-  const mistRef = useRef<THREE.Points>(null);
-
-  const checkpoint = MOUNTAIN_CHECKPOINTS.find(c => c.level === level) ?? MOUNTAIN_CHECKPOINTS[0];
-  const mistCount = preset === "potato" ? 0 : preset === "low" ? 3 : preset === "medium" ? 8 : 15;
-
-  const waterfall = useMemo(() => {
-    const height = 15 + checkpoint.elevation * 1.5;
-    const width = 3;
-
-    const waterfallGeometry = generateWaterfallGeometry(height, width, preset);
-    const mistGeometry = generateMist(
-      [checkpoint.position[0], checkpoint.elevation * 0.5 - 5, checkpoint.position[2]],
-      mistCount,
-      preset
-    );
-
-    return {
-      geometry: waterfallGeometry,
-      mist: mistCount > 0 ? mistGeometry : null,
-      material: createWaterfallMaterial(preset),
-    };
-  }, [checkpoint, mistCount, preset]);
-
-  useFrame(() => {
-    if (!mistRef.current || mistCount === 0) return;
-
-    // Animate mist particles
-    const positions = mistRef.current.geometry.getAttribute("position");
-    for (let i = 0; i < positions.count; i++) {
-      const y = positions.getY(i);
-      positions.setY(i, y + Math.sin(y * 0.1) * 0.02);
+function Mist({ count, origin }: { count: number; origin: [number, number, number] }) {
+  const geometry = useMemo(() => {
+    const random = randomSequence(origin[0] * 131 + origin[2] * 37 + count);
+    const g = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const radius = random() * 6;
+      const angle = random() * Math.PI * 2;
+      positions[i * 3] = origin[0] + Math.cos(angle) * radius;
+      positions[i * 3 + 1] = origin[1] + random() * 5;
+      positions[i * 3 + 2] = origin[2] + Math.sin(angle) * radius;
     }
-    positions.needsUpdate = true;
-  });
+    g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    return g;
+  }, [count, origin]);
+  if (!count) return null;
+  return <points geometry={geometry}><pointsMaterial color="#dbe8ea" size={.42} transparent opacity={.28} depthWrite={false} sizeAttenuation /></points>;
+}
 
-  return (
-    <group position={checkpoint.position}>
-      {/* Waterfall */}
-      <mesh
-        geometry={waterfall.geometry}
-        position={[0, checkpoint.elevation * 0.5, 0]}
-        rotation={[Math.PI / 2 + 0.1, 0, 0]}
-      >
-        <meshStandardMaterial
-          color={waterfall.material.color}
-          transparent={waterfall.material.transparent}
-          opacity={waterfall.material.opacity}
-          roughness={waterfall.material.roughness}
-          attach="material"
-        />
+export default function MountainWaterfalls() {
+  const { preset } = useGraphicsQuality();
+  const wind = useContext(MountainWindContext);
+  const quality = MOUNTAIN_QUALITY[preset];
+  const uniforms = useMemo(() => ({ time: wind ?? { value: 0 }, water: { value: new THREE.Color("#9ebec7") } }), [wind]);
+  return <group name="mountain-waterfalls">
+    {FALLS.map((fall, index) => <group key={index} position={fall.position} rotation={[0, fall.rotation, 0]}>
+      <mesh position={[0, -fall.height * .5, 0]} renderOrder={8}>
+        <planeGeometry args={[fall.width, fall.height, 8, 48]} />
+        <shaderMaterial transparent depthWrite={false} side={2} uniforms={uniforms} vertexShader="uniform float time;varying vec2 vUv;void main(){vUv=uv;vec3 p=position;p.x+=sin(time*4.+uv.y*30.)*.08*(1.-abs(uv.x-.5));gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}" fragmentShader="uniform vec3 water;uniform float time;varying vec2 vUv;void main(){float streak=sin((vUv.y-time*.7)*85.+sin(vUv.x*18.))*.5+.5;float edge=smoothstep(0.,.15,vUv.x)*smoothstep(1.,.85,vUv.x);float foam=smoothstep(.72,1.,streak)*.35;gl_FragColor=vec4(mix(water,vec3(.94),foam),edge*(.32+foam*.42));}" />
       </mesh>
-
-      {/* Mist points */}
-      {waterfall.mist && (
-        <points ref={mistRef} geometry={waterfall.mist}>
-          <pointsMaterial
-            color="#c0d0d5"
-            size={0.15}
-            transparent
-            opacity={0.4}
-            sizeAttenuation
-          />
-        </points>
-      )}
-    </group>
-  );
+      <Mist count={Math.floor(quality.mist / (index + 1.4))} origin={[0, -fall.height + 1.2, 0]} />
+    </group>)}
+  </group>;
 }

@@ -1,99 +1,43 @@
 "use client";
 import { useMemo } from "react";
+import { ConeGeometry, Color } from "three";
+import { EnvironmentAsset, GroundedAsset } from "../EnvironmentAsset";
 import { useGraphicsQuality } from "../GraphicsQuality";
-import { MOUNTAIN_CHECKPOINTS } from "./mountainConfig";
-import * as THREE from "three";
+import { MOUNTAIN_QUALITY, mountainHeight, pathX, randomSequence } from "./mountainConfig";
 
-function seededRandom(seed: number) {
-  const x = Math.sin(seed * 12.9898) * 43758.5453;
-  return x - Math.floor(x);
-}
-
-function generateCliffGeometry(position: [number, number, number], height: number, width: number, preset: string, seed: number) {
-  const segments = preset === "potato" ? 8 : preset === "low" ? 12 : 16;
-  const geometry = new THREE.BoxGeometry(width, height, width, segments, segments);
-
-  const positions = geometry.getAttribute("position");
-  for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i);
-    const y = positions.getY(i);
-    const z = positions.getZ(i);
-
-    // Add noise for jagged cliff edges using seeded random
-    const noise = Math.sin(x * 0.3 + y * 0.15 + seed) * Math.cos(z * 0.25) * 0.3;
-    positions.setX(i, x + noise);
-  }
-
-  positions.needsUpdate = true;
-  geometry.computeVertexNormals();
-  return geometry;
-}
-
-function createCliffMaterial(elevation: number, snowIntensity: number, preset: string) {
-  // Cool gray base for rock
-  const baseColor = new THREE.Color().setHSL(0.55, 0.25, 0.32 + elevation * 0.02);
-
-  // Snow accumulation on upper parts
-  const snowColor = new THREE.Color("#f0f4f5");
-  const mixedColor = baseColor.clone().lerp(snowColor, snowIntensity * 0.8);
-
-  const roughness = 0.88 - snowIntensity * 0.2;
-
-  return {
-    color: mixedColor,
-    roughness,
-    metalness: 0.02,
-  };
-}
-
-export default function MountainCliffs({ level }: { level: number }) {
+export default function MountainCliffs() {
   const { preset } = useGraphicsQuality();
+  const quality = MOUNTAIN_QUALITY[preset];
+  const silhouettes = useMemo(() => {
+    const random = randomSequence(9301);
+    return Array.from({ length: preset === "potato" ? 7 : 12 }, (_, index) => {
+      const side = index % 2 ? 1 : -1;
+      const z = 20 - index * 9.5;
+      const x = side * (32 + random() * 16);
+      const height = 28 + random() * 42 + Math.max(0, -z) * .35;
+      return { x, z, height, radius: 8 + random() * 12, rotation: random() * Math.PI };
+    });
+  }, [preset]);
+  const geometry = useMemo(() => new ConeGeometry(1, 1, 7, 4), []);
+  const rocks = useMemo(() => {
+    const random = randomSequence(5412);
+    return Array.from({ length: quality.rocks }, () => {
+      const z = 24 - random() * 106;
+      const side = random() > .5 ? 1 : -1;
+      const x = pathX(z) + side * (5.8 + random() * 22);
+      return { position: [x, mountainHeight(x, z) - .15, z] as [number, number, number], rotation: random() * Math.PI * 2, scale: .6 + random() * 1.7 };
+    });
+  }, [quality.rocks]);
 
-  const checkpoint = MOUNTAIN_CHECKPOINTS.find(c => c.level === level) ?? MOUNTAIN_CHECKPOINTS[0];
-
-  // Generate cliffs around the checkpoint
-  const cliffs = useMemo(() => {
-    const cliffCount = preset === "potato" ? 4 : preset === "low" ? 6 : preset === "medium" ? 8 : 10;
-    const result = [];
-
-    for (let i = 0; i < cliffCount; i++) {
-      const angle = (i / cliffCount) * Math.PI * 2;
-      const distance = 12 + checkpoint.elevation * 2;
-      const x = checkpoint.position[0] + Math.cos(angle) * distance;
-      const z = checkpoint.position[2] + Math.sin(angle) * distance;
-      const seed = checkpoint.elevation * 100 + i;
-      const height = 15 + checkpoint.elevation * 3 + seededRandom(seed) * 5;
-      const width = 4 + seededRandom(seed + 1) * 3;
-
-      result.push({
-        position: [x, height / 2, z] as [number, number, number],
-        geometry: generateCliffGeometry([x, height / 2, z], height, width, preset, seed),
-      });
-    }
-
-    const material = createCliffMaterial(checkpoint.elevation, checkpoint.snowIntensity * 0.6, preset);
-
-    return { cliffs: result, material };
-  }, [checkpoint, preset]);
-
-  return (
-    <group>
-      {cliffs.cliffs.map((cliff, index) => (
-        <mesh
-          key={index}
-          geometry={cliff.geometry}
-          position={cliff.position}
-          castShadow
-          receiveShadow
-        >
-          <meshStandardMaterial
-            color={cliffs.material.color}
-            roughness={cliffs.material.roughness}
-            metalness={cliffs.material.metalness}
-            attach="material"
-          />
-        </mesh>
-      ))}
-    </group>
-  );
+  return <group name="mountain-cliffs-and-rock-fields">
+    {silhouettes.map((peak, index) => (
+      <mesh key={index} geometry={geometry} position={[peak.x, peak.height * .48 - 4, peak.z]} scale={[peak.radius, peak.height, peak.radius * .72]} rotation={[0, peak.rotation, 0]} receiveShadow>
+        <meshStandardMaterial color={new Color(index % 3 ? "#63727a" : "#7a8588")} roughness={.94} metalness={0} />
+      </mesh>
+    ))}
+    <EnvironmentAsset id="coastal_cliff_02" low={preset === "low" || preset === "potato"} width={34} position={[-50, 8, -34]} rotation={Math.PI * .46} castShadow={quality.shadowCasters} tint="#b8c2c3" />
+    <EnvironmentAsset id="coastal_cliff_02" low={preset === "low" || preset === "potato"} width={38} position={[52, 16, -62]} rotation={-Math.PI * .54} castShadow={quality.shadowCasters} tint="#aeb9bd" />
+    <EnvironmentAsset id="coastal_cliff_02" low width={48} position={[0, 30, -118]} rotation={Math.PI} castShadow={false} tint="#d1d8da" />
+    {rocks.slice(0, Math.min(rocks.length, 18)).map((rock, index) => <GroundedAsset key={index} id="rock_moss_set_01" low={preset !== "ultra"} width={2.2 * rock.scale} position={rock.position} rotation={rock.rotation} castShadow={quality.shadowCasters} tint={rock.position[2] < -42 ? "#c7cdcc" : "#9fa79f"} normalAlignment={.18} burial={.08} />)}
+  </group>;
 }

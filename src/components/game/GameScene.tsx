@@ -19,6 +19,7 @@ import RealisticSky from "./RealisticSky";
 import { CoastalTerrainProvider } from "./terrainSurface";
 import { ForestSurface } from "./ForestOfResolve/ForestSurface";
 import ForestLighting from "./ForestOfResolve/ForestLighting";
+import { MountainSurface } from "./MountainsOfTrial/MountainSurface";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 const CAMERA_POSITION: [number, number, number] = [0, 1.7, 7.2];
@@ -81,7 +82,7 @@ function RegionReady({ onReady, regionKey }: { onReady: (key: string) => void; r
 function SceneContent({ onReady }: { onReady: (key: string) => void }) {
   const { level, reloadCounter } = useWorldProgress();
   const { region } = resolveWorld(level);
-  const Surface = region.id === "forest-of-resolve" ? ForestSurface : CoastalTerrainProvider;
+  const Surface = region.id === "forest-of-resolve" ? ForestSurface : region.id === "mountains-of-trial" ? MountainSurface : CoastalTerrainProvider;
   useEffect(() => {
     console.info("[World] Resolved region:", region.id);
     console.info("[RegionManager] Loading:", region.id);
@@ -128,7 +129,7 @@ function Scene() {
         dpr={config.dprMax}
         onCreated={handleCreated}
       >
-        {region.id === "forest-of-resolve" ? <ForestLighting /> : <SceneLighting />}
+        {region.id === "forest-of-resolve" ? <ForestLighting /> : region.id === "mountains-of-trial" ? null : <SceneLighting />}
         {process.env.NODE_ENV === "development" && <SceneStats />}
 
         {config.realisticSky ? (

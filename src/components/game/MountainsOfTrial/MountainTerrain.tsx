@@ -1,90 +1,79 @@
 "use client";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { Color, RepeatWrapping, SRGBColorSpace, NoColorSpace } from "three";
+import { useTexture } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import { useGraphicsQuality } from "../GraphicsQuality";
-import { MOUNTAIN_CHECKPOINTS } from "./mountainConfig";
-import * as THREE from "three";
+import { createMountainGeometry, MOUNTAIN_QUALITY } from "./mountainConfig";
 
-function generateTerrainGeometry(checkpoint: (typeof MOUNTAIN_CHECKPOINTS)[number], graphicsPreset: string) {
-  const segments = graphicsPreset === "potato" ? 32 : graphicsPreset === "low" ? 48 : graphicsPreset === "medium" ? 64 : 96;
-  const size = 40;
-  const geometry = new THREE.PlaneGeometry(size, size, segments, segments);
+export { createMountainGeometry } from "./mountainConfig";
 
-  const positions = geometry.getAttribute("position");
-  const elevation = checkpoint.elevation;
-
-  for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i);
-    const y = positions.getY(i);
-    const z = positions.getZ(i);
-
-    // Create mountain slope - higher elevation for higher checkpoints
-    const slope = elevation * 0.5;
-    const noise = Math.sin(x * 0.3) * Math.cos(z * 0.25) * 0.15 + Math.sin(x * 0.1) * Math.cos(z * 0.15) * 0.3;
-    const height = slope + noise;
-
-    positions.setY(i, height);
-  }
-
-  positions.needsUpdate = true;
-  geometry.computeVertexNormals();
-  return geometry;
-}
-
-function createTerrainMaterial(checkpoint: (typeof MOUNTAIN_CHECKPOINTS)[number], preset: string) {
-  const { snowIntensity } = checkpoint;
-
-  // Base color varies by elevation - lower is more green/moss, higher is more rock/snow
-  const baseColor = new THREE.Color().setHSL(
-    0.08 + checkpoint.elevation * 0.01, // Hue shift from green to gray
-    0.4 - checkpoint.elevation * 0.08,  // Saturation decrease
-    0.35 + checkpoint.elevation * 0.02  // Lightness
-  );
-
-  // Snow color
-  const snowColor = new THREE.Color("#e8f0f2");
-
-  // Mix based on elevation and snow intensity
-  const mixedColor = baseColor.clone().lerp(snowColor, snowIntensity * 0.7);
-
-  const roughness = 0.85 - snowIntensity * 0.3;
-  const metalness = 0.05;
-
-  return {
-    color: mixedColor,
-    roughness,
-    metalness,
-    snowIntensity,
-  };
-}
-
-export default function MountainTerrain({ level }: { level: number }) {
+export default function MountainTerrain() {
   const { preset } = useGraphicsQuality();
+  const gl = useThree(state => state.gl);
+  const quality = MOUNTAIN_QUALITY[preset];
+  const textures = useTexture(["/environment/forest-floor-Diffuse.jpg", "/environment/forest-floor-nor_gl.jpg", "/environment/forest-floor-Rough.jpg"]);
+  const geometry = useMemo(() => createMountainGeometry(quality.segments), [quality.segments]);
+  const maps = useMemo(() => {
+    const [color, normal, roughness] = textures.map(texture => texture.clone());
+    color.colorSpace = SRGBColorSpace;
+    normal.colorSpace = NoColorSpace;
+    roughness.colorSpace = NoColorSpace;
+    for (const texture of [color, normal, roughness]) {
+      texture.wrapS = texture.wrapT = RepeatWrapping;
+      texture.repeat.set(46, 54);
+      texture.anisotropy = Math.min(quality.anisotropy, gl.capabilities.getMaxAnisotropy());
+      texture.needsUpdate = true;
+    }
+    return { color, normal, roughness };
+  }, [textures, quality.anisotropy, gl]);
+  useEffect(() => () => {
+    geometry.dispose();
+    maps.color.dispose();
+    maps.normal.dispose();
+    maps.roughness.dispose();
+  }, [geometry, maps]);
 
-  const checkpoint = MOUNTAIN_CHECKPOINTS.find(c => c.level === level) ?? MOUNTAIN_CHECKPOINTS[0];
-
-  const geometry = useMemo(
-    () => generateTerrainGeometry(checkpoint, preset),
-    [checkpoint, preset]
-  );
-
-  const material = useMemo(
-    () => createTerrainMaterial(checkpoint, preset),
-    [checkpoint, preset]
-  );
-
-  return (
-    <mesh
-      geometry={geometry}
-      position={[checkpoint.position[0], 0, checkpoint.position[2]]}
-      receiveShadow
-      castShadow
-    >
-      <meshStandardMaterial
-        color={material.color}
-        roughness={material.roughness}
-        metalness={material.metalness}
-        attach="material"
-      />
-    </mesh>
-  );
+  return <mesh geometry={geometry} receiveShadow name="mountain-trail-terrain">
+    <meshStandardMaterial
+      map={maps.color}
+      normalMap={preset === "potato" ? null : maps.normal}
+      roughnessMap={maps.roughness}
+      color="#a9ada4"
+      roughness={.88}
+      metalness={0}
+      onBeforeCompile={shader => {
+        shader.uniforms.mossColor = { value: new Color("#354838") };
+        shader.uniforms.rockColor = { value: new Color("#636d70") };
+        shader.uniforms.snowColor = { value: new Color("#d9e1e3") };
+        shader.uniforms.iceColor = { value: new Color("#8fa8b4") };
+        shader.vertexShader = shader.vertexShader
+          .replace("#include <common>", "#include <common>\nvarying vec3 mountainPoint;varying vec3 mountainNormal;")
+          .replace("#include <beginnormal_vertex>", "#include <beginnormal_vertex>\nmountainNormal = normalize(normalMatrix * objectNormal);")
+          .replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nmountainPoint = worldPosition.xyz;");
+        shader.fragmentShader = shader.fragmentShader
+          .replace("#include <common>", "#include <common>\nvarying vec3 mountainPoint;varying vec3 mountainNormal;uniform vec3 mossColor;uniform vec3 rockColor;uniform vec3 snowColor;uniform vec3 iceColor;")
+          .replace("#include <color_fragment>", `#include <color_fragment>
+            float altitude = smoothstep(2.0, 22.0, mountainPoint.y);
+            float up = clamp(mountainNormal.y, 0.0, 1.0);
+            float steep = 1.0 - smoothstep(.42, .78, up);
+            float path = 1.0 - smoothstep(1.2, 5.6, abs(mountainPoint.x - (sin((mountainPoint.z+8.)*.115)*4.6 + sin((mountainPoint.z+31.)*.037)*2.4)));
+            float grit = fract(sin(dot(floor(mountainPoint.xz*28.), vec2(12.9898,78.233))) * 43758.5453);
+            float moss = (1.0 - altitude) * smoothstep(.48, .9, up) * (1.0 - path*.42);
+            float snow = smoothstep(.38, .95, altitude) * smoothstep(.52, .95, up);
+            snow *= smoothstep(.2, .95, sin(mountainPoint.x*.73 + mountainPoint.z*.47) * .5 + .5);
+            float ice = smoothstep(.72, 1.0, altitude) * smoothstep(.55, .82, up) * smoothstep(.42, .78, grit);
+            diffuseColor.rgb = mix(diffuseColor.rgb, rockColor, .52 + steep*.34);
+            diffuseColor.rgb = mix(diffuseColor.rgb, mossColor, moss*.6);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.42,.39,.34), path*.48*(1.0-snow));
+            diffuseColor.rgb = mix(diffuseColor.rgb, snowColor, snow*.78);
+            diffuseColor.rgb = mix(diffuseColor.rgb, iceColor, ice*.22);
+            diffuseColor.rgb *= mix(.82,1.13,grit);`)
+          .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
+            float highWet = smoothstep(8.0, 19.0, mountainPoint.y) * smoothstep(.55,.85,mountainNormal.y);
+            roughnessFactor = mix(roughnessFactor, .68, highWet*.25);`);
+      }}
+      customProgramCacheKey={() => `mountain-terrain-v1-${preset}`}
+    />
+  </mesh>;
 }

@@ -1,155 +1,46 @@
 "use client";
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
+import { Color } from "three";
 import { useGraphicsQuality } from "../GraphicsQuality";
-import { MOUNTAIN_CHECKPOINTS } from "./mountainConfig";
-import * as THREE from "three";
+import { MountainWindContext } from "./MountainWind";
+import { MOUNTAIN_QUALITY } from "./mountainConfig";
 
-function generateGateGeometry(width: number, height: number, depth: number, preset: string) {
-  const segments = preset === "potato" ? 8 : preset === "low" ? 12 : 16;
-  const geometry = new THREE.BoxGeometry(width, height, depth, segments, segments, segments);
-  const positions = geometry.getAttribute("position");
-
-  for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i);
-    const y = positions.getY(i);
-    const z = positions.getZ(i);
-
-    // Ancient weathering effects
-    const erosion = Math.sin(x * 0.3 + z * 0.2) * Math.cos(y * 0.15) * 0.08;
-    positions.setX(i, x + erosion);
-    positions.setZ(i, z + erosion * 0.8);
-  }
-
-  positions.needsUpdate = true;
-  geometry.computeVertexNormals();
-  return geometry;
+function Banner({ position, rotation = 0, scale = 1 }: { position: [number, number, number]; rotation?: number; scale?: number }) {
+  const wind = useContext(MountainWindContext);
+  const uniforms = useMemo(() => ({ time: wind ?? { value: 0 }, color: { value: new Color("#7e2d24") } }), [wind]);
+  return <mesh position={position} rotation={[0, rotation, 0]} scale={[scale, scale, scale]} castShadow>
+    <planeGeometry args={[1.2, 4.8, 8, 24]} />
+    <shaderMaterial side={2} uniforms={uniforms} vertexShader="uniform float time;varying vec2 vUv;void main(){vUv=uv;vec3 p=position;p.x+=sin(time*1.8+uv.y*10.)*.18*uv.y;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}" fragmentShader="uniform vec3 color;varying vec2 vUv;void main(){float fray=smoothstep(.04,.12,vUv.x)*smoothstep(.96,.84,vUv.x);gl_FragColor=vec4(color*(.75+vUv.y*.25),fray*.78);}" transparent depthWrite={false} />
+  </mesh>;
 }
 
-function generateStatueGeometry(height: number, preset: string) {
-  const segments = preset === "potato" ? 6 : preset === "low" ? 8 : 12;
-  const geometry = new THREE.CylinderGeometry(1.5, 2, height, segments, segments);
-  const positions = geometry.getAttribute("position");
-
-  for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i);
-    const y = positions.getY(i);
-    const z = positions.getZ(i);
-
-    // Statue erosion - weathered appearance
-    const erosion = Math.sin(x * 0.2 + z * 0.3) * Math.cos(y * 0.1) * 0.12;
-    positions.setX(i, x + erosion);
-  }
-
-  positions.needsUpdate = true;
-  geometry.computeVertexNormals();
-  return geometry;
+function Guardian({ x }: { x: number }) {
+  return <group position={[x, 20.4, -77]} rotation={[0, x > 0 ? -.18 : .18, 0]}>
+    <mesh position={[0, 5.8, 0]} castShadow receiveShadow><cylinderGeometry args={[2.0, 2.9, 11.5, 8, 6]} /><meshStandardMaterial color="#858c8b" roughness={.94} /></mesh>
+    <mesh position={[0, 12.4, 0]} castShadow receiveShadow><boxGeometry args={[4.4, 3.5, 2.7, 3, 3, 2]} /><meshStandardMaterial color="#8d9491" roughness={.92} /></mesh>
+    <mesh position={[x > 0 ? -1.8 : 1.8, 5.5, 0]} rotation={[0, 0, x > 0 ? -.28 : .28]} castShadow receiveShadow><boxGeometry args={[1.1, 8.8, 1.1]} /><meshStandardMaterial color="#777f7e" roughness={.95} /></mesh>
+    <mesh position={[0, -.3, 0]} castShadow receiveShadow><boxGeometry args={[6, 1.4, 4.2]} /><meshStandardMaterial color="#737d7d" roughness={.95} /></mesh>
+  </group>;
 }
 
-function createGateMaterial(snowIntensity: number, preset: string) {
-  const baseColor = new THREE.Color().setHSL(0.5, 0.2, 0.28);
-  const trimColor = new THREE.Color("#b8a15a"); // Weathered bronze/gold
-  const snowColor = new THREE.Color("#e8eef0");
-
-  const mixedColor = baseColor.clone().lerp(trimColor, snowIntensity * 0.2);
-
-  const roughness = 0.88;
-
-  return {
-    color: mixedColor,
-    roughness,
-    metalness: 0.05,
-  };
-}
-
-function createLightMaterial(intensity: number) {
-  return {
-    color: new THREE.Color("#ffbf10"),
-    emissive: new THREE.Color("#ffbf10"),
-    emissiveIntensity: intensity,
-  };
-}
-
-export default function MountainTemple({ level }: { level: number }) {
+export default function MountainTemple() {
   const { preset } = useGraphicsQuality();
-
-  const checkpoint = MOUNTAIN_CHECKPOINTS.find(c => c.level === level) ?? MOUNTAIN_CHECKPOINTS[4]; // Level 15 finale
-  const segments = preset === "potato" ? 6 : preset === "low" ? 8 : preset === "medium" ? 12 : 16;
-
-  const gate = useMemo(() => {
-    const width = 8;
-    const height = 12;
-    const depth = 4;
-
-    return {
-      geometry: generateGateGeometry(width, height, depth, preset),
-      material: createGateMaterial(checkpoint.snowIntensity, preset),
-    };
-  }, [checkpoint, preset]);
-
-  const statues = useMemo(() => {
-    const statueCount = preset === "potato" ? 2 : preset === "low" ? 2 : preset === "medium" ? 4 : 6;
-    const result = [];
-
-    for (let i = 0; i < statueCount; i++) {
-      const angle = (i / statueCount) * Math.PI * 2;
-      const distance = 6;
-      const x = checkpoint.position[0] + Math.cos(angle) * distance;
-      const z = checkpoint.position[2] + Math.sin(angle) * distance;
-      const height = 8 + checkpoint.elevation * 0.5;
-
-      result.push({
-        position: [x, height / 2, z] as [number, number, number],
-        geometry: generateStatueGeometry(height, preset),
-      });
-    }
-
-    return result;
-  }, [checkpoint, preset]);
-
-  const lightMaterial = createLightMaterial(0.8);
-
-  return (
-    <group position={checkpoint.position}>
-      {/* Main gate structure */}
-      <mesh
-        geometry={gate.geometry}
-        position={[0, 6, 0]}
-        castShadow
-        receiveShadow
-      >
-        <meshStandardMaterial
-          color={gate.material.color}
-          roughness={gate.material.roughness}
-          metalness={gate.material.metalness}
-          attach="material"
-        />
-      </mesh>
-
-      {/* Statues flanking the gate */}
-      {statues.map((statue, index) => (
-        <mesh
-          key={index}
-          geometry={statue.geometry}
-          position={statue.position}
-          castShadow
-        >
-          <meshStandardMaterial
-            color={gate.material.color}
-            roughness={gate.material.roughness - 0.1}
-            metalness={gate.material.metalness}
-            attach="material"
-          />
-        </mesh>
-      ))}
-
-      {/* Warm light inside gate */}
-      <pointLight
-        position={[0, 8, 0]}
-        color={lightMaterial.color}
-        intensity={lightMaterial.emissiveIntensity}
-        distance={15}
-        decay={2}
-      />
-    </group>
-  );
+  const quality = MOUNTAIN_QUALITY[preset];
+  return <group name="mountain-gate-temple">
+    <mesh position={[0, 29, -84]} castShadow={quality.shadowCasters} receiveShadow><boxGeometry args={[32, 25, 4, 6, 8, 2]} /><meshStandardMaterial color="#858e8c" roughness={.94} metalness={0} /></mesh>
+    <mesh position={[0, 27, -81.7]}><boxGeometry args={[9, 12, .5]} /><meshBasicMaterial color="#c77938" transparent opacity={.38} /></mesh>
+    <mesh position={[-10.2, 22, -69]} rotation={[-.42, 0, 0]} castShadow={quality.shadowCasters} receiveShadow><boxGeometry args={[3.2, 2.2, 24, 2, 2, 10]} /><meshStandardMaterial color="#929895" roughness={.92} /></mesh>
+    <mesh position={[10.2, 22, -69]} rotation={[-.42, 0, 0]} castShadow={quality.shadowCasters} receiveShadow><boxGeometry args={[3.2, 2.2, 24, 2, 2, 10]} /><meshStandardMaterial color="#929895" roughness={.92} /></mesh>
+    {[-10, -6, -2, 2, 6, 10].map((x, index) => <mesh key={index} position={[x, 19.8 + index * .08, -61 - index * 1.8]} castShadow={quality.shadowCasters} receiveShadow><boxGeometry args={[3.3, .45, 2.4]} /><meshStandardMaterial color="#8b918e" roughness={.96} /></mesh>)}
+    <Guardian x={-10.5} />
+    <Guardian x={10.5} />
+    {preset !== "potato" && <>
+      <Banner position={[-7.4, 29.5, -72]} rotation={.02} scale={1.2} />
+      <Banner position={[7.4, 29.5, -72]} rotation={-.02} scale={1.2} />
+      <Banner position={[-13.3, 22.8, -68]} rotation={.24} scale={.85} />
+      <Banner position={[13.3, 22.8, -68]} rotation={-.24} scale={.85} />
+    </>}
+    <pointLight position={[0, 25.5, -72]} color="#f0a85b" intensity={preset === "potato" ? 10 : 26} distance={38} decay={2} />
+    <mesh position={[0, 24.2, -73.2]}><boxGeometry args={[6.8, 8.5, .35]} /><meshBasicMaterial color="#d88d45" transparent opacity={.36} /></mesh>
+  </group>;
 }

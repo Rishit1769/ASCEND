@@ -1,42 +1,27 @@
 "use client";
-import { useWorldProgress } from "../WorldProgress";
-import { useGraphicsQuality } from "../GraphicsQuality";
-import MountainTerrain from "./MountainTerrain";
-import MountainCliffs from "./MountainCliffs";
+import MountainAtmosphere from "./MountainAtmosphere";
 import MountainBridge from "./MountainBridge";
+import MountainCliffs from "./MountainCliffs";
+import MountainClouds from "./MountainClouds";
+import MountainParticles from "./MountainParticles";
 import MountainTemple from "./MountainTemple";
+import MountainTerrain from "./MountainTerrain";
 import MountainVegetation from "./MountainVegetation";
 import MountainWaterfalls from "./MountainWaterfalls";
-import MountainClouds from "./MountainClouds";
-import MountainAtmosphere from "./MountainAtmosphere";
 import MountainWind from "./MountainWind";
-import type { RegionSlug } from "@/types/game";
 
-interface MountainsOfTrialProps {
-  region?: RegionSlug;
-}
-
-export default function MountainsOfTrial({ region }: MountainsOfTrialProps) {
-  const { level } = useWorldProgress();
-  const { preset } = useGraphicsQuality();
-
-  if (region !== "mountains-of-trial") return null;
-
-  return (
+export default function MountainsOfTrial() {
+  return <MountainWind>
     <group name="mountains-of-trial-environment">
-      <MountainAtmosphere level={level} />
-      <MountainCliffs level={level} />
-      <MountainTerrain level={level} />
-      <MountainVegetation level={level} />
-      <MountainClouds level={level} />
-
-      {level >= 13 && <MountainBridge level={level} />}
-      {level >= 14 && <MountainWaterfalls level={level} />}
-      {level >= 15 && <MountainTemple level={level} />}
-
-      <MountainWind>
-        {null}
-      </MountainWind>
+      <MountainAtmosphere />
+      <MountainClouds />
+      <MountainTerrain />
+      <MountainCliffs />
+      <MountainVegetation />
+      <MountainBridge />
+      <MountainWaterfalls />
+      <MountainTemple />
+      <MountainParticles />
     </group>
-  );
+  </MountainWind>;
 }
