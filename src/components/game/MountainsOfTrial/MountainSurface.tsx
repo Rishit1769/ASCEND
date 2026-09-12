@@ -16,7 +16,7 @@ export function MountainSurface({ children }: { children: ReactNode }) {
     bridge.name = "mountain-broken-bridge-collision";
     bridge.scale.y *= .22;
     bridge.scale.z *= 1.35;
-    bridge.position.set(-1.2, 7.95, -29);
+    bridge.position.set(-1.2, 7.95, -40);
     bridge.rotation.y = -.1;
     bridge.traverse(child => { if (child instanceof THREE.Mesh) { child.castShadow = true; child.receiveShadow = true; } });
     const original = ground.geometry;

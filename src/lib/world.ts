@@ -49,7 +49,7 @@ const names = [
 const shorePositions: WorldPoint[] = [[0, 0, 6.5], [.5, 0, 4], [-.5, 0, -2], [0, 0, -10], [0, 0, -21]];
 const forestPositions: WorldPoint[] = [8, -1, -12, -23, -34].map(z => [Math.sin(z * .19) * 1.65, 0, z]);
 const mountainPositions: WorldPoint[] = [[0, 0, 10], [4, 4.2, -9], [-1.2, 8.2, -29], [5.2, 14.5, -50], [0, 21, -58]];
-const mountainCameraOffsets: WorldPoint[] = [[0, 3.4, 12.5], [-2, 4.2, 12], [0, 8.5, 27], [-3, 9.5, 32], [0, 8, 38]];
+const mountainCameraOffsets: WorldPoint[] = [[0, 3.4, 12.5], [-2, 4.2, 12], [6, 4, 14], [-3, 9.5, 32], [0, 8, 38]];
 const shoreDescriptions = ["Journey Begins. Beyond the tide, an ancient sanctuary waits.", "A ruined path rises through wet stone and moss.", "Broken masonry marks the first traces of the old world.", "The sanctuary rises above the final approach.", "The first gate opens toward the Forest of Resolve."];
 const mapCenters = [225, 400, 280, 430, 300, 400, 325];
 

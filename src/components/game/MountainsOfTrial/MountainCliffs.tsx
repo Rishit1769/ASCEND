@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { ConeGeometry, Color } from "three";
+import { BufferGeometry, Color, Float32BufferAttribute } from "three";
 import { EnvironmentAsset, GroundedAsset } from "../EnvironmentAsset";
 import { useGraphicsQuality } from "../GraphicsQuality";
 import { MOUNTAIN_QUALITY, mountainHeight, pathX, randomSequence } from "./mountainConfig";
@@ -10,15 +10,32 @@ export default function MountainCliffs() {
   const quality = MOUNTAIN_QUALITY[preset];
   const silhouettes = useMemo(() => {
     const random = randomSequence(9301);
-    return Array.from({ length: preset === "potato" ? 7 : 12 }, (_, index) => {
-      const side = index % 2 ? 1 : -1;
-      const z = 20 - index * 9.5;
-      const x = side * (32 + random() * 16);
-      const height = 28 + random() * 42 + Math.max(0, -z) * .35;
-      return { x, z, height, radius: 8 + random() * 12, rotation: random() * Math.PI };
+    return Array.from({ length: preset === "potato" ? 8 : 14 }, (_, index) => {
+      const angle = index / 14 * Math.PI * 2 + random() * .2;
+      const radius = 70 + random() * 18;
+      return { x: Math.cos(angle) * radius, z: -31 + Math.sin(angle) * radius, height: 24 + random() * 36, width: 24 + random() * 24, depth: 10 + random() * 12, rotation: -angle + Math.PI / 2, seed: random() };
     });
   }, [preset]);
-  const geometry = useMemo(() => new ConeGeometry(1, 1, 7, 4), []);
+  const geometry = useMemo(() => {
+    const segments = 8;
+    const positions: number[] = [];
+    const indices: number[] = [];
+    for (let i = 0; i <= segments; i++) {
+      const x = -0.5 + i / segments;
+      const top = .62 + Math.sin(i * 2.7) * .14 + Math.sin(i * 5.1) * .08;
+      positions.push(x, 0, -.5, x, top, -.5, x, 0, .5, x, top * .92, .5);
+    }
+    for (let i = 0; i < segments; i++) {
+      const a = i * 4;
+      const b = (i + 1) * 4;
+      indices.push(a, b, a + 1, b, b + 1, a + 1, a + 2, a + 3, b + 2, b + 2, a + 3, b + 3, a, a + 2, b, b, a + 2, b + 2, a + 1, b + 1, a + 3, b + 1, b + 3, a + 3);
+    }
+    const result = new BufferGeometry();
+    result.setAttribute("position", new Float32BufferAttribute(positions, 3));
+    result.setIndex(indices);
+    result.computeVertexNormals();
+    return result;
+  }, []);
   const rocks = useMemo(() => {
     const random = randomSequence(5412);
     return Array.from({ length: quality.rocks }, () => {
@@ -31,8 +48,8 @@ export default function MountainCliffs() {
 
   return <group name="mountain-cliffs-and-rock-fields">
     {silhouettes.map((peak, index) => (
-      <mesh key={index} geometry={geometry} position={[peak.x, peak.height * .48 - 4, peak.z]} scale={[peak.radius, peak.height, peak.radius * .72]} rotation={[0, peak.rotation, 0]} receiveShadow>
-        <meshStandardMaterial color={new Color(index % 3 ? "#63727a" : "#7a8588")} roughness={.94} metalness={0} />
+      <mesh key={index} geometry={geometry} position={[peak.x, -3, peak.z]} scale={[peak.width, peak.height, peak.depth]} rotation={[0, peak.rotation, 0]} receiveShadow={false}>
+        <meshStandardMaterial color={new Color(index % 3 ? "#667983" : "#7f8d92")} roughness={.96} metalness={0} fog />
       </mesh>
     ))}
     <EnvironmentAsset id="coastal_cliff_02" low={preset === "low" || preset === "potato"} width={34} position={[-50, 8, -34]} rotation={Math.PI * .46} castShadow={quality.shadowCasters} tint="#b8c2c3" />

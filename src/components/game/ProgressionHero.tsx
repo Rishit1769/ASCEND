@@ -22,6 +22,9 @@ export default function ProgressionHero() {
   const travel = useRef<{ curve: CatmullRomCurve3; elapsed: number; duration: number } | null>(null);
   const prior = useRef<number | null>(null);
   const lastTarget = useRef(new Vector3());
+  const target = useRef(new Vector3());
+  const targetDelta = useRef(new Vector3());
+  const cameraOffset = useRef(new Vector3());
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -74,16 +77,43 @@ export default function ProgressionHero() {
       if (t === 1) { travel.current = null; setWalking(false); }
     } else if (walking) setWalking(false);
     if (!movement) hero.rotation.y += (0 - hero.rotation.y) * (1 - Math.exp(-delta * 5));
-    const target = hero.position.clone().add(new Vector3(0, region.id === "forest-of-resolve" ? 1.8 : 1, 0));
+    const mountainComposition = region.id === "mountains-of-trial" && checkpoint.level === 13;
+    target.current.set(0, mountainComposition ? 2.4 : region.id === "forest-of-resolve" ? 1.8 : 1, 0).add(hero.position);
     if (controls) {
       if (!initialized.current) {
-        camera.position.copy(hero.position).add(new Vector3(...checkpoint.cameraOffset));
+        cameraOffset.current.fromArray(checkpoint.cameraOffset);
+        camera.position.copy(hero.position).add(cameraOffset.current);
+        const terrainHit = terrain(camera.position.x, camera.position.z);
+        const clearance = camera.position.y - terrainHit.point.y;
+        if (clearance < 1.2) camera.position.y = terrainHit.point.y + 1.2;
+        if (process.env.NODE_ENV === "development" && region.id === "mountains-of-trial") {
+          console.info("[CameraSafety] LEVEL 13 CHECKPOINT", {
+            heroPosition: hero.position.toArray(),
+            cameraPosition: camera.position.toArray(),
+            cameraTarget: target.current.toArray(),
+            orbitTarget: controls.target.toArray(),
+            distanceToHero: camera.position.distanceTo(hero.position),
+            distanceToNearestTerrain: Math.max(0, clearance),
+            terrainSurface: terrainHit.surface,
+            intersectsMajorGeometry: clearance < 1.2,
+          });
+        }
         initialized.current = true;
-      } else camera.position.add(target.clone().sub(lastTarget.current));
-      controls.target.copy(target);
-      camera.position.y = Math.max(camera.position.y, terrain(camera.position.x, camera.position.z).point.y + 1.2);
+      } else {
+        targetDelta.current.copy(target.current).sub(lastTarget.current);
+        camera.position.add(targetDelta.current);
+      }
+      controls.target.copy(target.current);
+      const beforeOrbit = terrain(camera.position.x, camera.position.z);
+      camera.position.y = Math.max(camera.position.y, beforeOrbit.point.y + 1.2);
       controls.update();
-      lastTarget.current.copy(target);
+      const afterOrbit = terrain(camera.position.x, camera.position.z);
+      const safeY = afterOrbit.point.y + 1.2;
+      if (camera.position.y < safeY) {
+        camera.position.y = safeY;
+        controls.update();
+      }
+      lastTarget.current.copy(target.current);
     }
     if (process.env.NODE_ENV === "development") state.gl.domElement.dataset.worldState = JSON.stringify({ level, region: region.id, checkpoint: checkpoint.id, moving: !!movement, position: hero.position.toArray(), camera: camera.position.toArray() });
   }, -.5);

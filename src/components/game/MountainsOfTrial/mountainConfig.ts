@@ -19,7 +19,7 @@ export interface MountainCheckpoint {
 export const MOUNTAIN_CHECKPOINTS: MountainCheckpoint[] = [
   { level: 11, name: "Mountain Base", description: "The climb begins. Pine forest thins as the trail rises toward the broken crossing.", position: [0, 0, 10], elevation: 0, cloudLevel: 29, cameraOffset: [0, 3.4, 12.5], snowIntensity: 0, windStrength: .3 },
   { level: 12, name: "The Ascending Trail", description: "The path narrows. Exposed rock and old stair fragments lead higher.", position: [4, 4.2, -9], elevation: 4.2, cloudLevel: 20, cameraOffset: [-2, 4.2, 12], snowIntensity: .12, windStrength: .52 },
-  { level: 13, name: "The Broken Crossing", description: "A damaged stone bridge spans the ravine. Waterfalls drop into mist below.", position: [-1.2, 8.2, -29], elevation: 8.2, cloudLevel: 11, cameraOffset: [0, 8.5, 27], snowIntensity: .28, windStrength: .72 },
+  { level: 13, name: "The Broken Crossing", description: "A damaged stone bridge spans the ravine. Waterfalls drop into mist below.", position: [-1.2, 8.2, -29], elevation: 8.2, cloudLevel: 11, cameraOffset: [6, 4, 14], snowIntensity: .28, windStrength: .72 },
   { level: 14, name: "Temple Approach", description: "Snow accumulates. Giant statues carved into the mountain guard ancient stairs.", position: [5.2, 14.5, -50], elevation: 14.5, cloudLevel: 4, cameraOffset: [-3, 9.5, 32], snowIntensity: .62, windStrength: .9 },
   { level: 15, name: "The Mountain Gate", description: "The final climb. The monumental gate rises before the summit.", position: [0, 21, -58], elevation: 21, cloudLevel: -5, cameraOffset: [0, 8, 38], snowIntensity: 1, windStrength: 1 },
 ];

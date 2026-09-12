@@ -117,7 +117,7 @@ function Scene() {
       <SceneFallback />
       <Canvas
         shadows={config.shadowsEnabled ? { type: PCFShadowMap } : undefined}
-        camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV }}
+        camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV, near: .25, far: 220 }}
         style={{ pointerEvents: "auto", cursor: "grab" }}
         gl={{
           antialias: true,
@@ -157,10 +157,10 @@ function Scene() {
           enablePan={false}
           enableZoom={true}
           enableRotate={true}
-          minDistance={ORBIT_MIN_DISTANCE}
-          maxDistance={ORBIT_MAX_DISTANCE}
-          minPolarAngle={ORBIT_MIN_POLAR}
-          maxPolarAngle={Math.min(ORBIT_MAX_POLAR, Math.PI / 2 - .04)}
+          minDistance={region.id === "mountains-of-trial" ? 5.5 : ORBIT_MIN_DISTANCE}
+          maxDistance={region.id === "mountains-of-trial" ? 42 : ORBIT_MAX_DISTANCE}
+          minPolarAngle={region.id === "mountains-of-trial" ? .42 : ORBIT_MIN_POLAR}
+          maxPolarAngle={region.id === "mountains-of-trial" ? 1.42 : Math.min(ORBIT_MAX_POLAR, Math.PI / 2 - .04)}
           enableDamping={true}
           dampingFactor={0.05}
         />

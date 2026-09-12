@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { AssetScatter, GroundedAsset } from "../EnvironmentAsset";
 import { useGraphicsQuality } from "../GraphicsQuality";
 import { MOUNTAIN_QUALITY, mountainHeight, pathX, randomSequence } from "./mountainConfig";
+import { useWorldProgress } from "../WorldProgress";
 
 function placements(count: number, seed: number, kind: "tree" | "shrub" | "debris") {
   const random = randomSequence(seed);
@@ -26,9 +27,18 @@ function placements(count: number, seed: number, kind: "tree" | "shrub" | "debri
 
 export default function MountainVegetation() {
   const { preset } = useGraphicsQuality();
+  const { level } = useWorldProgress();
   const quality = MOUNTAIN_QUALITY[preset];
-  const trees = useMemo(() => placements(quality.trees, 1211, "tree"), [quality.trees]);
-  const shrubs = useMemo(() => placements(Math.floor(quality.trees * .75), 1212, "shrub"), [quality.trees]);
+  const trees = useMemo(() => {
+    if (level === 13) return [];
+    const result = placements(quality.trees, 1211, "tree");
+    return result;
+  }, [quality.trees, level]);
+  const shrubs = useMemo(() => {
+    if (level === 13) return [];
+    const result = placements(Math.floor(quality.trees * .75), 1212, "shrub");
+    return result;
+  }, [quality.trees, level]);
   const debris = useMemo(() => placements(quality.debris, 1213, "debris"), [quality.debris]);
 
   return <group name="mountain-vegetation-and-debris">
