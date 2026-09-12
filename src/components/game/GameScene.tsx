@@ -133,7 +133,7 @@ function SceneContent({ onReady }: { onReady: (key: string) => void }) {
   }, [region.id, region.status]);
   return (
     <group key={`${region.id}-${reloadCounter}`} name={`region-manager-${region.id}`}>
-      <ErrorBoundary fallback={<Html center>Region could not load. Reload to retry.</Html>}>
+      <ErrorBoundary>
       <Suspense fallback={<Html center>Preparing {region.name}...</Html>}><Surface>
       {region.status !== "available" && <group name="development-placeholder-region"><mesh position={[0, -1, -5]}><cylinderGeometry args={[3.5, 6, 2.5, 8]} /><meshStandardMaterial color="#4f5b5e" roughness={.88} /></mesh><mesh position={[0, .7, -5]}><torusGeometry args={[1.2, .16, 8, 20]} /><meshStandardMaterial color="#c2a464" metalness={.5} roughness={.4} /></mesh></group>}
           {region.status === "available" && <Environment region={region.id} />}
