@@ -30,6 +30,7 @@ function Mist({ layer, index, reducedMotion, shaft = false }: { layer: Layer; in
     <planeGeometry />
     <shaderMaterial ref={ref} uniforms={uniforms} transparent depthWrite={false} side={THREE.DoubleSide}
       blending={shaft ? THREE.AdditiveBlending : THREE.NormalBlending}
+      toneMapped={false}
       vertexShader={`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`}
       fragmentShader={`
         varying vec2 vUv; uniform float time; uniform float opacity; uniform vec3 tint;
@@ -42,8 +43,7 @@ function Mist({ layer, index, reducedMotion, shaft = false }: { layer: Layer; in
           float edge=pow(max(0.,1.-dot(q,q)),2.);
           float alpha=edge*smoothstep(.18,.8,n)*opacity;
           gl_FragColor=vec4(tint,alpha);
-          #include <tonemapping_fragment>
-          #include <colorspace_fragment>
+        }
         `}
     />
   </mesh>;

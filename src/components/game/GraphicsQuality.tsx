@@ -34,6 +34,14 @@ export interface GraphicsConfig {
   waterReflectionCadence: number;
   /** Enable water reflection at all */
   waterReflectionEnabled: boolean;
+  /** Water plane tessellation for vertex wave motion */
+  waterGeometrySegments: number;
+  /** Relative strength of water wave displacement */
+  waterWaveStrength: number;
+  /** Relative strength of animated water normal detail */
+  waterNormalStrength: number;
+  /** Relative strength of water refraction distortion */
+  waterRefractionStrength: number;
   /** Sky lighting environment map resolution */
   skyEnvResolution: number;
   /** Sky lighting intensity */
@@ -66,6 +74,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterResolution: 1024,
     waterReflectionCadence: 1000 / 60,
     waterReflectionEnabled: true,
+    waterGeometrySegments: 160,
+    waterWaveStrength: 1,
+    waterNormalStrength: 1,
+    waterRefractionStrength: 1,
     skyEnvResolution: 256,
     skyEnvIntensity: 0.65,
     realisticSky: true,
@@ -89,6 +101,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterResolution: 1024,
     waterReflectionCadence: 1000 / 60,
     waterReflectionEnabled: true,
+    waterGeometrySegments: 128,
+    waterWaveStrength: .9,
+    waterNormalStrength: .92,
+    waterRefractionStrength: .85,
     skyEnvResolution: 256,
     skyEnvIntensity: 0.65,
     realisticSky: true,
@@ -112,6 +128,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterResolution: 512,
     waterReflectionCadence: 1000 / 24,
     waterReflectionEnabled: true,
+    waterGeometrySegments: 80,
+    waterWaveStrength: .62,
+    waterNormalStrength: .72,
+    waterRefractionStrength: .38,
     skyEnvResolution: 128,
     skyEnvIntensity: 0.65,
     realisticSky: true,
@@ -135,6 +155,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterResolution: 256,
     waterReflectionCadence: 1000 / 12,
     waterReflectionEnabled: true,
+    waterGeometrySegments: 36,
+    waterWaveStrength: .32,
+    waterNormalStrength: .46,
+    waterRefractionStrength: .12,
     skyEnvResolution: 128,
     skyEnvIntensity: 0.5,
     realisticSky: true,
@@ -158,6 +182,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterResolution: 128,
     waterReflectionCadence: 1000 / 6,
     waterReflectionEnabled: false,
+    waterGeometrySegments: 12,
+    waterWaveStrength: .16,
+    waterNormalStrength: .22,
+    waterRefractionStrength: 0,
     skyEnvResolution: 64,
     skyEnvIntensity: 0.4,
     realisticSky: false,

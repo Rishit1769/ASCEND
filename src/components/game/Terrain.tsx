@@ -18,9 +18,21 @@ function GroundBed() {
         .replace("#include <color_fragment>", `#include <color_fragment>
           float coarse = mineral(groundPosition.xz*.8);
           float grit = mineral(groundPosition.xz*85.);
-          diffuseColor.rgb *= mix(vec3(.58,.65,.61),vec3(1.03,1.0,.92),coarse) * (.76+grit*.35);
+          float pebble = mineral(groundPosition.xz*21. + coarse);
+          float damp = 1.-smoothstep(-1.55,-.98,groundPosition.y);
+          float moss = smoothstep(.42,.92,mineral(groundPosition.xz*3.7+vec2(2.1,-.4))) * damp;
+          vec3 gravel = mix(vec3(.42,.44,.41),vec3(.72,.69,.6),grit);
+          vec3 silt = vec3(.33,.31,.27);
+          vec3 mossColor = vec3(.18,.28,.20);
+          diffuseColor.rgb *= mix(vec3(.58,.65,.61),vec3(1.03,1.0,.92),coarse) * (.72+grit*.34);
+          diffuseColor.rgb = mix(diffuseColor.rgb, gravel, pebble*.18);
+          diffuseColor.rgb = mix(diffuseColor.rgb, silt, damp*.32);
+          diffuseColor.rgb = mix(diffuseColor.rgb, mossColor, moss*.34);
           float path = 1.-smoothstep(.6,2.,abs(groundPosition.x-sin(groundPosition.z*.23)*.65));
-          diffuseColor.rgb *= 1.+path*.12;`);
+          diffuseColor.rgb *= 1.+path*.12;`)
+        .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
+          float wet = 1.-smoothstep(-1.58,-1.06,groundPosition.y);
+          roughnessFactor = mix(roughnessFactor, max(.48, roughnessFactor*.62), wet*.55);`);
     };
     return result;
   }, []);

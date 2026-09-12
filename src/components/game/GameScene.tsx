@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { ACESFilmicToneMapping, PCFShadowMap, SRGBColorSpace } from "three";
 import { applyProps, Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment as SkyLighting, Html, OrbitControls } from "@react-three/drei";
@@ -198,8 +198,6 @@ function DevStats() {
     </div>
   );
 }
-
-import { useState } from "react";
 
 /* ─── Main export ────────────────────────────────────────────────── */
 export default function GameScene() {

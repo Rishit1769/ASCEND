@@ -89,7 +89,12 @@ function useArtMaterial(id: string, tint = "#ffffff") {
         shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 artPosition;")
           .replace("#include <color_fragment>", `#include <color_fragment>
             float weather = sin(artPosition.x * .73 + sin(artPosition.z * .51)) * sin(artPosition.z * .31 + artPosition.y);
-            diffuseColor.rgb *= mix(vec3(.82, .86, .83), vec3(1.04, 1.01, .96), weather * .5 + .5);
+            float strata = sin(artPosition.y * 9.5 + artPosition.x * .8 + artPosition.z * .35) * .5 + .5;
+            float fine = fract(sin(dot(floor(artPosition.xz*34.),vec2(12.9898,78.233)))*43758.5453);
+            float moss = smoothstep(.58,.95,sin(artPosition.x*.62 + artPosition.z*.74 + fine)*.5+.5) * smoothstep(-1.2,.55,artPosition.y);
+            diffuseColor.rgb *= mix(vec3(.74, .82, .81), vec3(1.08, 1.03, .94), weather * .5 + .5);
+            diffuseColor.rgb *= mix(.84,1.12,strata) * (.9 + fine*.16);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.18,.27,.2), moss*.22);
             float damp=(1.-smoothstep(-1.68,-1.30,artPosition.y))*smoothstep(-.4,.6,weather);
             diffuseColor.rgb *= 1.-damp*.25;
             ${id === "coast_rocks_01" ? `
