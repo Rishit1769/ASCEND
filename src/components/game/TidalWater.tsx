@@ -10,6 +10,7 @@ import { useGraphicsQuality } from "./GraphicsQuality";
 import { useReducedMotion } from "./useReducedMotion";
 import { SUN_DIRECTION } from "./skyConfig";
 import { FOREST_REFLECTION } from "./ForestOfResolve/forestConfig";
+import { REALM_QUALITY } from "./RealmOfAscension/realmConfig";
 
 function reflectionUpdater(reflector: Reflector, enabled: boolean, cadenceMs: number): THREE.Object3D["onBeforeRender"] {
   const renderReflection = reflector.onBeforeRender;
@@ -31,24 +32,25 @@ function reflectionUpdater(reflector: Reflector, enabled: boolean, cadenceMs: nu
   };
 }
 
-export default function TidalWater({ forest = false }: { forest?: boolean }) {
+export default function TidalWater({ forest = false, realm = false }: { forest?: boolean; realm?: boolean }) {
   const sample = useTerrainSurface();
   const { config: graphics, preset } = useGraphicsQuality();
-  const config = forest ? { ...graphics, waterReflectionEnabled: FOREST_REFLECTION[preset].enabled, waterResolution: FOREST_REFLECTION[preset].resolution, waterReflectionCadence: FOREST_REFLECTION[preset].cadence } : graphics;
+  const quality = REALM_QUALITY[preset];
+  const config = realm ? { ...graphics, waterReflectionEnabled: quality.reflection > 0, waterResolution: quality.reflection, waterReflectionCadence: 1000 / 20, waterGeometrySegments: quality.segments, waterFoamEnabled: false } : forest ? { ...graphics, waterReflectionEnabled: FOREST_REFLECTION[preset].enabled, waterResolution: FOREST_REFLECTION[preset].resolution, waterReflectionCadence: FOREST_REFLECTION[preset].cadence } : graphics;
   const reduced = useReducedMotion();
   const normals = useTexture("/environment/waternormals.jpg");
   const bathymetry = useMemo(() => {
     const size = 256;
     const data = new Uint8Array(size * size);
     for (let z = 0; z < size; z++) for (let x = 0; x < size; x++) {
-      const height = sample(-45 + x / (size - 1) * 90, -65 + z / (size - 1) * 90).point.y;
+      const height = realm ? -.5 : sample(-45 + x / (size - 1) * 90, -65 + z / (size - 1) * 90).point.y;
       data[z * size + x] = Math.round(THREE.MathUtils.clamp((height - SEABED_Y) / 8, 0, 1) * 255);
     }
     const map = new THREE.DataTexture(data, size, size, THREE.RedFormat);
     map.minFilter = map.magFilter = THREE.LinearFilter;
     map.needsUpdate = true;
     return map;
-  }, [sample]);
+  }, [sample, realm]);
   useEffect(() => () => bathymetry.dispose(), [bathymetry]);
 
   const water = useMemo(() => {
@@ -58,7 +60,7 @@ export default function TidalWater({ forest = false }: { forest?: boolean }) {
     normal.needsUpdate = true;
     const resolution = config.waterResolution;
     const segments = config.waterGeometrySegments;
-    const geometry = new THREE.PlaneGeometry(160, 160, segments, segments);
+    const geometry = new THREE.PlaneGeometry(realm ? 36 : 160, realm ? 32 : 160, segments, segments);
     const reflector = config.waterReflectionEnabled
       ? new Reflector(geometry, { textureWidth: resolution, textureHeight: resolution, clipBias: .003, multisample: 0 })
       : new THREE.Mesh(geometry, new THREE.ShaderMaterial({
@@ -68,9 +70,9 @@ export default function TidalWater({ forest = false }: { forest?: boolean }) {
         vertexShader: "void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
         fragmentShader: "void main(){gl_FragColor=vec4(.18,.35,.37,.72);}",
       }));
-    reflector.name = forest ? "forest-stream" : "shallow-coastal-water";
+    reflector.name = realm ? "ascension-courtyard-water" : forest ? "forest-stream" : "shallow-coastal-water";
     reflector.rotation.x = -Math.PI / 2;
-    reflector.position.set(0, forest ? -.48 : SEA_LEVEL, -25);
+    reflector.position.set(0, realm ? -.12 : forest ? -.48 : SEA_LEVEL, realm ? -14 : -25);
     const material = reflector.material as THREE.ShaderMaterial;
     const reflectionSample = config.waterReflectionEnabled ? `
         vec2 uv=projected.xy/projected.w+n.xz*(.011+.012*refractionStrength);
@@ -97,12 +99,12 @@ export default function TidalWater({ forest = false }: { forest?: boolean }) {
     material.depthWrite = false;
     material.fog = true;
     Object.assign(material.uniforms, THREE.UniformsUtils.clone(THREE.UniformsLib.fog), {
-      normalMap: { value: normal }, depthMap: { value: bathymetry }, time: { value: 0 }, sun: { value: SUN_DIRECTION },
-      shallow: { value: new THREE.Color(forest ? "#587365" : "#496c68") }, deep: { value: new THREE.Color(forest ? "#182e29" : "#162b2f") },
-      mid: { value: new THREE.Color(forest ? "#314e43" : "#315d61") }, skyTint: { value: new THREE.Color(forest ? "#72887e" : "#9db7c1") },
+      normalMap: { value: normal }, depthMap: { value: bathymetry }, time: { value: 0 }, sun: { value: realm ? new THREE.Vector3(35, 65, 48).normalize() : SUN_DIRECTION },
+      shallow: { value: new THREE.Color(realm ? "#79b9c7" : forest ? "#587365" : "#496c68") }, deep: { value: new THREE.Color(realm ? "#315d70" : forest ? "#182e29" : "#162b2f") },
+      mid: { value: new THREE.Color(realm ? "#4c8fa8" : forest ? "#314e43" : "#315d61") }, skyTint: { value: new THREE.Color(realm ? "#c8e0f0" : forest ? "#72887e" : "#9db7c1") },
       texel: { value: 1 / Math.max(1, resolution) },
-      waveStrength: { value: config.waterWaveStrength * (forest ? .18 : 1) },
-      normalStrength: { value: config.waterNormalStrength },
+      waveStrength: { value: config.waterWaveStrength * (realm ? .08 : forest ? .18 : 1) },
+      normalStrength: { value: config.waterNormalStrength * (realm ? .35 : 1) },
       reflectionStrength: { value: config.waterReflectionEnabled ? 1 : 0 },
       refractionStrength: { value: config.waterRefractionStrength },
     });
@@ -152,6 +154,7 @@ export default function TidalWater({ forest = false }: { forest?: boolean }) {
         ${reflectionSample}
         float floorY=${SEABED_Y.toFixed(2)}+texture2D(depthMap,(worldPoint.xz-vec2(-45.,-65.))/90.).r*8.;
         if(floorY>worldPoint.y+.025)discard;
+        ${realm ? "if(abs(worldPoint.x)<3.15 || length(worldPoint.xz-vec2(0.,8.))<10.1)discard;" : ""}
         ${forest ? "if(abs(worldPoint.x)>43. || worldPoint.z < -63. || worldPoint.z > 23.)discard;" : ""}
         float depth=max(0.,worldPoint.y-floorY);
         float absorption=1.-exp(-depth*1.22);
@@ -172,7 +175,7 @@ export default function TidalWater({ forest = false }: { forest?: boolean }) {
     material.needsUpdate = true;
     if (config.waterReflectionEnabled) reflector.onBeforeRender = reflectionUpdater(reflector as Reflector, true, config.waterReflectionCadence);
     return reflector;
-  }, [forest, config.waterResolution, config.waterGeometrySegments, config.waterWaveStrength, config.waterNormalStrength, config.waterReflectionEnabled, config.waterReflectionCadence, config.waterRefractionStrength, config.waterWaveLayers, config.waterNormalLayers, config.waterFoamEnabled, normals, bathymetry]);
+  }, [realm, forest, config.waterResolution, config.waterGeometrySegments, config.waterWaveStrength, config.waterNormalStrength, config.waterReflectionEnabled, config.waterReflectionCadence, config.waterRefractionStrength, config.waterWaveLayers, config.waterNormalLayers, config.waterFoamEnabled, normals, bathymetry]);
   useEffect(() => () => {
     (water.material as THREE.ShaderMaterial).uniforms.normalMap.value.dispose();
     if (water instanceof Reflector) water.dispose();

@@ -31,7 +31,7 @@ export interface WorldRegion {
 const definitions: Omit<WorldRegion, "checkpoints">[] = [
   { id: "forgotten-shore", name: "The Forgotten Shore", levelStart: 1, levelEnd: 5, theme: "Beginning. Isolation. Discovery.", landmark: "Ancient Sanctuary", characterStage: "Wanderer", status: "available", terrainLayers: ["rock", "sand", "gravel", "moss", "wet-rock"], atmosphere: { fog: "#687f91", density: .022, sunIntensity: 2.8 }, requiredAssets: [] },
   { id: "forest-of-resolve", name: "Forest of Resolve", levelStart: 6, levelEnd: 10, theme: "Discipline. Consistency. Persistence.", landmark: "Guardian Tree and Gate", characterStage: "Warrior", status: "available", terrainLayers: ["forest-floor", "mud", "moss", "rock"], atmosphere: { fog: "#526963", density: .023, sunIntensity: 2.2 }, requiredAssets: [] },
-  { id: "realm-of-ascension", name: "Realm of Ascension", levelStart: 11, levelEnd: 15, theme: "Transcendence. Mastery. Elevation.", landmark: "Ascension Throne", characterStage: "Ascendant", status: "available", terrainLayers: ["paving", "rock", "moss"], atmosphere: { fog: "#53677b", density: .012, sunIntensity: 3.5 }, requiredAssets: [] },
+  { id: "realm-of-ascension", name: "Realm of Ascension", levelStart: 11, levelEnd: 15, theme: "Transcendence. Mastery. Elevation.", landmark: "Ascension Throne", characterStage: "Ascendant", status: "available", terrainLayers: ["paving", "rock", "moss"], atmosphere: { fog: "#c4d8e3", density: .004, sunIntensity: 2.8 }, requiredAssets: [] },
   { id: "temple-of-knowledge", name: "Temple of Knowledge", levelStart: 16, levelEnd: 20, theme: "Learning. Intellect. Mastery.", landmark: "Great Archive", characterStage: "Champion", status: "assets-required", terrainLayers: ["paving", "dirt", "moss", "rock"], atmosphere: { fog: "#b4b6b2", density: .014, sunIntensity: 3 }, requiredAssets: ["Archive architecture, courtyard and stairs", "Scholar statues, rune stones and fountain", "Weathered paving PBR set"] },
   { id: "celestial-heights", name: "The Celestial Heights", levelStart: 21, levelEnd: 25, theme: "Mastery. Perspective. The final ascent.", landmark: "Summit Gate", characterStage: "Ascendant / Legend", status: "assets-required", terrainLayers: ["snow", "rock", "paving"], atmosphere: { fog: "#c4d6e0", density: .009, sunIntensity: 3.7 }, requiredAssets: ["Alpine pass and summit stair terrain", "Celestial ruins and summit gate", "Snow and ice PBR set"] },
   { id: "summit", name: "The Summit", levelStart: 26, levelEnd: Infinity, theme: "Achievement. Mastery. Legacy.", landmark: "Ascension Throne", characterStage: "Legend", status: "assets-required", terrainLayers: ["snow", "rock", "paving", "moss"], atmosphere: { fog: "#c9d6dd", density: .006, sunIntensity: 3.4 }, requiredAssets: ["Summit sanctuary and panoramic terrain", "Ascension throne and journey monuments"] },
@@ -46,8 +46,8 @@ const names = [
 ];
 const shorePositions: WorldPoint[] = [[0, 0, 6.5], [.5, 0, 4], [-.5, 0, -2], [0, 0, -10], [0, 0, -21]];
 const forestPositions: WorldPoint[] = [8, -1, -12, -23, -34].map(z => [Math.sin(z * .19) * 1.65, 0, z]);
-const realmPositions: WorldPoint[] = [[0, 0, 8], [3, .35, -8], [-2, .7, -23], [2, 1.1, -38], [0, 1.5, -52]];
-const realmCameraOffsets: WorldPoint[] = [[0, 5.5, 15], [-9, 6.5, 13], [10, 7, 16], [-11, 8, 18], [0, 9, 22]];
+const realmPositions: WorldPoint[] = [[0, .3, 8], [0, .3, -8], [0, .3, -27], [0, 4.3, -40], [0, 6.3, -57]];
+const realmCameraOffsets: WorldPoint[] = [[0, 6, 20], [8, 7, 19], [10, 8, 21], [8, 9, 23], [0, 7, 20]];
 const shoreDescriptions = ["Journey Begins. Beyond the tide, an ancient sanctuary waits.", "A ruined path rises through wet stone and moss.", "Broken masonry marks the first traces of the old world.", "The sanctuary rises above the final approach.", "The first gate opens toward the Forest of Resolve."];
 const mapCenters = [225, 400, 280, 430, 300, 400, 325];
 

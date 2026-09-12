@@ -8,6 +8,7 @@ import { createGroundSampler, normalizeAsset, snapToTerrain, surfaceAlignment, f
 import { WORLD_REGIONS, WORLD_CHECKPOINTS, resolveWorld } from "../src/lib/world.ts";
 import { findSoleProbes, measureSoles, SOLE_OFFSET } from "../src/components/game/heroGrounding.ts";
 import { createForestGeometry, FOREST, FOREST_QUALITY } from "../src/components/game/ForestOfResolve/forestConfig.ts";
+import { realmHeight, REALM_QUALITY } from "../src/components/game/RealmOfAscension/realmConfig.ts";
 
 // Keep real geometry, skins and clips, but omit images for a headless geometry-only test.
 async function loadGeometry(path) {
@@ -28,6 +29,18 @@ async function loadGeometry(path) {
 }
 
 const hero = await loadGeometry("../public/models/armored_king.glb");
+for (const checkpoint of resolveWorld(11).region.checkpoints) {
+  const [x, y, z] = checkpoint.worldPosition;
+  assert(Math.abs(realmHeight(x, z) - y) < .001, checkpoint.name + ": grounding differs from checkpoint");
+}
+for (let z = 8; z > -57; z -= .05) {
+  const y = realmHeight(0, z);
+  assert(y >= .3 && y <= 6.3, "Realm route must stay on supported stone");
+  assert(Math.abs(realmHeight(0, z - .05) - y) <= .251, "Realm route has a gap or excessive stair rise");
+}
+assert.equal(REALM_QUALITY.low.reflection, 0);
+assert.equal(REALM_QUALITY.potato.reflection, 0);
+console.log("Realm checkpoint grounding, full stair route, and lightweight reflection tiers passed.");
 const near = await loadGeometry("../public/environment/coast_rocks_01.glb");
 const far = await loadGeometry("../public/environment/coast_rocks_01-lod.glb");
 const a = normalizeAsset(near.scene, 35, undefined, true);

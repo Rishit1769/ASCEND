@@ -20,6 +20,7 @@ import { CoastalTerrainProvider } from "./terrainSurface";
 import { ForestSurface } from "./ForestOfResolve/ForestSurface";
 import ForestLighting from "./ForestOfResolve/ForestLighting";
 import { RealmSurface } from "./RealmOfAscension/RealmSurface";
+import AscensionAtmosphere, { AscensionLighting } from "./RealmOfAscension/AscensionAtmosphere";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 const CAMERA_POSITION: [number, number, number] = [0, 1.7, 7.2];
@@ -117,7 +118,7 @@ function Scene() {
       <SceneFallback />
       <Canvas
         shadows={config.shadowsEnabled ? { type: PCFShadowMap } : undefined}
-        camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV, near: .25, far: 1000 }}
+        camera={{ position: CAMERA_POSITION, fov: region.id === "realm-of-ascension" ? 50 : CAMERA_FOV, near: .25, far: 1000 }}
         style={{ pointerEvents: "auto", cursor: "grab" }}
         gl={{
           antialias: true,
@@ -129,10 +130,10 @@ function Scene() {
         dpr={config.dprMax}
         onCreated={handleCreated}
       >
-        {region.id === "forest-of-resolve" ? <ForestLighting /> : <SceneLighting />}
+        {region.id === "realm-of-ascension" ? <AscensionLighting /> : region.id === "forest-of-resolve" ? <ForestLighting /> : <SceneLighting />}
         {process.env.NODE_ENV === "development" && <SceneStats />}
 
-        {config.realisticSky && region.id !== "realm-of-ascension" ? (
+        {region.id === "realm-of-ascension" ? <><AscensionAtmosphere /><SkyLighting key="realm-sky" resolution={config.skyEnvResolution} frames={1} environmentIntensity={.5}><AscensionAtmosphere capture /></SkyLighting></> : config.realisticSky ? (
           <Suspense fallback={<AtmosphericSky />}>
             <RealisticSky />
             <SkyLighting
@@ -158,9 +159,9 @@ function Scene() {
           enableZoom={true}
           enableRotate={true}
           minDistance={region.id === "realm-of-ascension" ? 6 : ORBIT_MIN_DISTANCE}
-          maxDistance={region.id === "realm-of-ascension" ? 28 : ORBIT_MAX_DISTANCE}
+          maxDistance={region.id === "realm-of-ascension" ? 34 : ORBIT_MAX_DISTANCE}
           minPolarAngle={region.id === "realm-of-ascension" ? .48 : ORBIT_MIN_POLAR}
-          maxPolarAngle={region.id === "realm-of-ascension" ? 1.38 : Math.min(ORBIT_MAX_POLAR, Math.PI / 2 - .04)}
+          maxPolarAngle={region.id === "realm-of-ascension" ? 1.55 : Math.min(ORBIT_MAX_POLAR, Math.PI / 2 - .04)}
           enableDamping={true}
           dampingFactor={0.05}
         />
