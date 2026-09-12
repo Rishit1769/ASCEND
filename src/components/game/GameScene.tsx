@@ -94,10 +94,14 @@ function ProgressTracker({ regionKey }: { regionKey: string }) {
   const prevRegionKey = useRef(regionKey);
   const readyEmitted = useRef(false);
 
-  // Emit progress updates
+  // Emit progress updates — deferred to avoid setState-in-render when
+  // ForestSurface.useGLTF resolves Suspense during the same React commit.
   useEffect(() => {
-    emitLoaderProgress(progress);
-  }, [progress]);
+    if (active) {
+      const id = requestAnimationFrame(() => emitLoaderProgress(progress));
+      return () => cancelAnimationFrame(id);
+    }
+  }, [progress, active]);
 
   // When region changes, reset the ready-emitted flag
   useEffect(() => {
