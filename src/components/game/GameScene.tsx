@@ -16,6 +16,7 @@ import { GraphicsProvider, useGraphicsQuality } from "./GraphicsQuality";
 import GraphicsSettings from "./GraphicsSettings";
 import SceneEffects from "./SceneEffects";
 import RealisticSky from "./RealisticSky";
+import RegionTitleOverlay from "./RegionTitleOverlay";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 const CAMERA_POSITION: [number, number, number] = [0, 1.7, 7.2];
@@ -149,9 +150,7 @@ function Scene() {
         <SceneContent />
         <SceneEffects />
       </Canvas>
-      {region.status !== "available" && <div key={region.id} className="absolute inset-0 flex items-center justify-center bg-black/65 px-20 text-center text-white" style={{ animation: "atlas-reveal .5s ease" }}>
-        <div className="max-w-md"><h2 className="font-serif text-2xl">{region.name}</h2><p className="mt-3 text-sm text-white/70">{region.theme}</p><p className="mt-5 text-xs text-white/60">This region awaits its environment assets. Its checkpoints are recorded in the Map.</p></div>
-      </div>}
+      <RegionTitleOverlay />
 
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-16"
