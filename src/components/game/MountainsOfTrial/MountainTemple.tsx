@@ -26,7 +26,7 @@ function Guardian({ x }: { x: number }) {
 export default function MountainTemple() {
   const { preset } = useGraphicsQuality();
   const quality = MOUNTAIN_QUALITY[preset];
-  return <group name="mountain-gate-temple">
+  return <group name="mountain-gate-temple" userData={{ cameraObstacle: true }}>
     <mesh position={[0, 29, -84]} castShadow={quality.shadowCasters} receiveShadow><boxGeometry args={[32, 25, 4, 6, 8, 2]} /><meshStandardMaterial color="#858e8c" roughness={.94} metalness={0} /></mesh>
     <mesh position={[0, 27, -81.7]}><boxGeometry args={[9, 12, .5]} /><meshBasicMaterial color="#c77938" transparent opacity={.38} /></mesh>
     <mesh position={[-10.2, 22, -69]} rotation={[-.42, 0, 0]} castShadow={quality.shadowCasters} receiveShadow><boxGeometry args={[3.2, 2.2, 24, 2, 2, 10]} /><meshStandardMaterial color="#929895" roughness={.92} /></mesh>

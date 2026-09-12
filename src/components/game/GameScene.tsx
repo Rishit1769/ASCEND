@@ -117,8 +117,8 @@ function Scene() {
       <SceneFallback />
       <Canvas
         shadows={config.shadowsEnabled ? { type: PCFShadowMap } : undefined}
-        camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV, near: .25, far: 220 }}
-        style={{ pointerEvents: "auto", cursor: "grab" }}
+        camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV, near: .25, far: 1000 }}
+        style={{ pointerEvents: "auto", cursor: "grab", background: region.id === "mountains-of-trial" ? "#526975" : undefined }}
         gl={{
           antialias: true,
           alpha: true,
@@ -129,6 +129,7 @@ function Scene() {
         dpr={config.dprMax}
         onCreated={handleCreated}
       >
+        {region.id === "mountains-of-trial" && <color attach="background" args={["#526975"]} />}
         {region.id === "forest-of-resolve" ? <ForestLighting /> : region.id === "mountains-of-trial" ? null : <SceneLighting />}
         {process.env.NODE_ENV === "development" && <SceneStats />}
 

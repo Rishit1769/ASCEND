@@ -11,7 +11,7 @@ export default function MountainCliffs() {
   const silhouettes = useMemo(() => {
     const random = randomSequence(9301);
     return Array.from({ length: preset === "potato" ? 8 : 14 }, (_, index) => {
-      const angle = index / 14 * Math.PI * 2 + random() * .2;
+      const angle = index / (preset === "potato" ? 8 : 14) * Math.PI * 2 + random() * .2;
       const radius = 70 + random() * 18;
       return { x: Math.cos(angle) * radius, z: -31 + Math.sin(angle) * radius, height: 24 + random() * 36, width: 24 + random() * 24, depth: 10 + random() * 12, rotation: -angle + Math.PI / 2, seed: random() };
     });
@@ -46,9 +46,9 @@ export default function MountainCliffs() {
     });
   }, [quality.rocks]);
 
-  return <group name="mountain-cliffs-and-rock-fields">
+  return <group name="mountain-cliffs-and-rock-fields" userData={{ cameraObstacle: true }}>
     {silhouettes.map((peak, index) => (
-      <mesh key={index} geometry={geometry} position={[peak.x, -3, peak.z]} scale={[peak.width, peak.height, peak.depth]} rotation={[0, peak.rotation, 0]} receiveShadow={false}>
+      <mesh key={index} geometry={geometry} position={[peak.x, -3, peak.z]} scale={[peak.width, peak.height, peak.depth]} rotation={[0, peak.rotation, 0]} receiveShadow={false} userData={{ backgroundMountain: true }}>
         <meshStandardMaterial color={new Color(index % 3 ? "#667983" : "#7f8d92")} roughness={.96} metalness={0} fog />
       </mesh>
     ))}

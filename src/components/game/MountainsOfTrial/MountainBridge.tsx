@@ -7,7 +7,7 @@ export default function MountainBridge() {
   const { preset } = useGraphicsQuality();
   const quality = MOUNTAIN_QUALITY[preset];
   const low = preset === "low" || preset === "potato";
-  return <group name="broken-crossing-landmark">
+  return <group name="broken-crossing-landmark" userData={{ cameraObstacle: true }}>
     <EnvironmentAsset id="modular_fort_01" part="modular_fort_01_wall_walkway_straight_01" low={low} width={3.8} position={[-1.2, 8.0, -40]} rotation={-.1} castShadow={quality.shadowCasters} tint="#aeb5b1" />
     <EnvironmentAsset id="modular_fort_01" part="modular_fort_01_wall_walkway_straight_01" low width={2.5} position={[-6.2, 7.45, -40.9]} rotation={-.28} castShadow={quality.shadowCasters} tint="#8f9694" />
     <EnvironmentAsset id="modular_fort_01" part="modular_fort_01_wall_walkway_straight_01" low width={2.4} position={[4.9, 7.25, -39.2]} rotation={.18} castShadow={quality.shadowCasters} tint="#8f9694" />

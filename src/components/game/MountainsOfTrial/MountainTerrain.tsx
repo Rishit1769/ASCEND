@@ -36,7 +36,7 @@ export default function MountainTerrain() {
     maps.roughness.dispose();
   }, [geometry, maps]);
 
-  return <mesh geometry={geometry} receiveShadow name="mountain-trail-terrain">
+  return <mesh geometry={geometry} receiveShadow name="mountain-trail-terrain" userData={{ cameraGround: true, cameraObstacle: true }}>
     <meshStandardMaterial
       map={maps.color}
       normalMap={preset === "potato" ? null : maps.normal}
@@ -52,7 +52,7 @@ export default function MountainTerrain() {
           shader.uniforms.iceColor = { value: new Color("#8fa8b4") };
         shader.vertexShader = shader.vertexShader
           .replace("#include <common>", "#include <common>\nvarying vec3 mountainPoint;varying vec3 mountainNormal;")
-          .replace("#include <beginnormal_vertex>", "#include <beginnormal_vertex>\nmountainNormal = normalize(normalMatrix * objectNormal);")
+          .replace("#include <beginnormal_vertex>", "#include <beginnormal_vertex>\nmountainNormal = normalize(mat3(modelMatrix) * objectNormal);")
           .replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nmountainPoint = worldPosition.xyz;");
         shader.fragmentShader = shader.fragmentShader
           .replace("#include <common>", "#include <common>\nvarying vec3 mountainPoint;varying vec3 mountainNormal;uniform float checkpointLevel;uniform vec3 mossColor;uniform vec3 rockColor;uniform vec3 snowColor;uniform vec3 iceColor;")

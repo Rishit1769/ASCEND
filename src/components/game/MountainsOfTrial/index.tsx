@@ -9,6 +9,9 @@ import MountainTerrain from "./MountainTerrain";
 import MountainVegetation from "./MountainVegetation";
 import MountainWaterfalls from "./MountainWaterfalls";
 import MountainWind from "./MountainWind";
+import MountainWorldShell from "./MountainWorldShell";
+import MountainCameraSafety from "./MountainCameraSafety";
+import MountainWorldDiagnostics from "./MountainWorldDiagnostics";
 
 export default function MountainsOfTrial() {
   return <MountainWind>
@@ -16,12 +19,15 @@ export default function MountainsOfTrial() {
       <MountainAtmosphere />
       <MountainClouds />
       <MountainTerrain />
+      <MountainWorldShell />
       <MountainCliffs />
       <MountainVegetation />
       <MountainBridge />
       <MountainWaterfalls />
       <MountainTemple />
       <MountainParticles />
+      <MountainCameraSafety />
+      {process.env.NODE_ENV === "development" && <MountainWorldDiagnostics />}
     </group>
   </MountainWind>;
 }
