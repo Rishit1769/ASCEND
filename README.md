@@ -96,6 +96,21 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run assets:realism` | Fetch HDRI sky and water normal textures |
 | `npm run test:grounding` | Run hero grounding regression test (headless Three.js) |
 
+### Vercel Deployment
+
+```bash
+# Deploy to Vercel
+npx vercel
+
+# Or connect your GitHub repository in the Vercel dashboard
+```
+
+**Vercel Settings:**
+- Framework: Next.js
+- Build Command: `npm run build`
+- Node Version: 18+ (auto-detected via `.nvmrc`)
+- No environment variables required
+
 ---
 
 ## Project Structure

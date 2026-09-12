@@ -6,7 +6,7 @@
 npm run build
 ```
 
-This runs `next build`, which:
+This runs `next build` (Turbopack), which:
 1. Compiles TypeScript
 2. Bundles client-side code
 3. Pre-renders static pages
@@ -29,46 +29,67 @@ No environment variables are required for the MVP. The application uses:
 - No authentication
 - No external services
 
-## Deployment Targets
+## Vercel Deployment
 
-### Vercel (Recommended)
+### Recommended Settings
 
-Next.js is optimized for Vercel deployment:
+| Setting | Value |
+|---------|-------|
+| **Framework Preset** | Next.js |
+| **Root Directory** | `./` (project root) |
+| **Build Command** | `npm run build` |
+| **Install Command** | `npm install` |
+| **Output Directory** | `.next` (auto-detected) |
+| **Node.js Version** | 18+ (auto-detected via `.nvmrc`) |
+
+### Vercel Configuration
+
+The project includes a `vercel.json` with:
+
+- **Cache headers** for static assets (GLB models, textures, JS chunks)
+- **Region**: `iad1` (US East)
+
+### Environment Variables
+
+No environment variables are needed for the MVP.
+
+### Build Notes
+
+- The build uses **Turbopack** (Next.js 16 default bundler)
+- Static assets total ~46MB in `public/` (all git-tracked)
+- Largest single GLB: 7.1MB (`pine_roots.glb`)
+- Build output: ~2.2MB in `.next/static/chunks/`
+- Server build: ~5.2MB in `.next/server/`
+
+### Troubleshooting
+
+If the Vercel build fails:
+
+1. **Check Node version**: Ensure Vercel uses Node 18+ (`.nvmrc` specifies 20)
+2. **Check build logs**: Look for memory issues with large GLB processing
+3. **Check chunk loading**: Verify dynamic imports resolve correctly
+4. **Check asset serving**: Verify GLB files are accessible at their public paths
+
+### Asset Paths
+
+All assets in `public/` are served at their relative paths:
+
+| Asset | Runtime Path |
+|-------|-------------|
+| `public/environment/waternormals.jpg` | `/environment/waternormals.jpg` |
+| `public/environment/coast_rocks_01.glb` | `/environment/coast_rocks_01.glb` |
+| `public/models/armored_king.glb` | `/models/armored_king.glb` |
+| `public/environment/kloofendal_48d_partly_cloudy_2k.hdr` | `/environment/kloofendal_48d_partly_cloudy_2k.hdr` |
+
+### Git Tracking
+
+All required assets are tracked by Git:
 
 ```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
+git ls-files public/ | wc -l  # Should show 29 files
 ```
 
-No `vercel.json` is needed — Next.js defaults work.
-
-### Static Export
-
-The app can be exported as static files:
-
-```bash
-next build --export
-```
-
-**Note**: The 3D scene requires client-side JavaScript. Static export works but all rendering happens in the browser.
-
-### Docker
-
-No Dockerfile exists. To create one:
-
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
+Do NOT add `public/environment/` or `public/models/` to `.gitignore`.
 
 ## Asset Pipeline
 
@@ -94,17 +115,6 @@ npm run assets:realism
 | Water normals | Three.js examples | MIT |
 | Forest floor textures | Poly Haven | CC0 |
 
-### Asset Optimization
-
-The `optimize-environment.mjs` script uses glTF Transform to:
-1. Deduplicate meshes and materials
-2. Weld vertices
-3. Simplify geometry (LOD generation)
-4. Compress textures to WebP (via sharp)
-5. Apply meshopt quantization
-
-Both high-detail and LOD variants are generated for each model.
-
 ## Performance Considerations
 
 ### Bundle Size
@@ -116,15 +126,8 @@ Both high-detail and LOD variants are generated for each model.
 ### Caching
 
 - Static assets in `public/` are served with Next.js default caching headers
-- GLB models are large (1–5MB each) — consider CDN caching for production
+- GLB models are large (1–7MB each) — CDN caching via `vercel.json` headers
 - HDR sky is ~2MB — consider lazy loading
-
-### CDN
-
-For production deployment, consider:
-- Serving `public/environment/` assets from a CDN
-- Using Next.js `images` config for image optimization
-- Enabling Brotli compression
 
 ## Monitoring
 
