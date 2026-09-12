@@ -435,7 +435,7 @@ export function GraphicsProvider({ children }: { children: React.ReactNode }) {
         if (next !== current) {
           lastAutoChange.current = now;
           autoDowngrades.current++;
-          console.log(`[ASCEND] Auto quality: ${current} → ${next} (FPS: ${fps.toFixed(1)})`);
+          if (process.env.NODE_ENV === "development") console.log(`[ASCEND] Auto quality: ${current} → ${next} (FPS: ${fps.toFixed(1)})`);
           return next;
         }
       }
@@ -444,7 +444,7 @@ export function GraphicsProvider({ children }: { children: React.ReactNode }) {
         if (next !== current) {
           lastAutoChange.current = now;
           autoDowngrades.current++;
-          console.log(`[ASCEND] Auto quality: ${current} → ${next} (FPS: ${fps.toFixed(1)})`);
+          if (process.env.NODE_ENV === "development") console.log(`[ASCEND] Auto quality: ${current} → ${next} (FPS: ${fps.toFixed(1)})`);
           return next;
         }
       }
@@ -453,7 +453,7 @@ export function GraphicsProvider({ children }: { children: React.ReactNode }) {
         if (next !== current) {
           lastAutoChange.current = now;
           autoDowngrades.current--;
-          console.log(`[ASCEND] Auto quality: ${current} → ${next} (FPS: ${fps.toFixed(1)})`);
+          if (process.env.NODE_ENV === "development") console.log(`[ASCEND] Auto quality: ${current} → ${next} (FPS: ${fps.toFixed(1)})`);
           return next;
         }
       }

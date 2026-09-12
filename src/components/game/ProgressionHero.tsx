@@ -25,9 +25,10 @@ export default function ProgressionHero() {
   const lastTarget = useRef(new Vector3());
   const target = useRef(new Vector3());
   const targetDelta = useRef(new Vector3());
+  const curvePoint = useRef(new Vector3());
+  const curveTangent = useRef(new Vector3());
   const cameraOffset = useRef(new Vector3());
   const initialized = useRef(false);
-  const frameLog = useRef(0);
 
   useEffect(() => {
     if (!root.current) return;
@@ -70,10 +71,11 @@ export default function ProgressionHero() {
       if (!walking) setWalking(true);
       movement.elapsed += Math.min(delta, .05);
       const t = Math.min(1, movement.elapsed / movement.duration);
-      const point = movement.curve.getPointAt(t);
-      hero.position.set(point.x, terrain(point.x, point.z).point.y, point.z);
-      const tangent = movement.curve.getTangentAt(t);
-      const heading = Math.atan2(tangent.x, tangent.z) - Math.PI;
+      // Reuse scratch vectors — no per-frame allocation.
+      movement.curve.getPointAt(t, curvePoint.current);
+      hero.position.set(curvePoint.current.x, terrain(curvePoint.current.x, curvePoint.current.z).point.y, curvePoint.current.z);
+      movement.curve.getTangentAt(t, curveTangent.current);
+      const heading = Math.atan2(curveTangent.current.x, curveTangent.current.z) - Math.PI;
       const angle = Math.atan2(Math.sin(heading - hero.rotation.y), Math.cos(heading - hero.rotation.y));
       hero.rotation.y += angle * (1 - Math.exp(-delta * 10));
       if (t === 1) { travel.current = null; setWalking(false); }
@@ -128,10 +130,6 @@ export default function ProgressionHero() {
       }
       } else controls.update();
       lastTarget.current.copy(target.current);
-    }
-    if (process.env.NODE_ENV === "development" && region.id === "realm-of-ascension" && frameLog.current < 4) {
-      frameLog.current++;
-      console.info("[RealmCam]", frameLog.current, "init", initialized.current, "hero", hero.position.toArray().map(n => +n.toFixed(2)), "cam", camera.position.toArray().map(n => +n.toFixed(2)), "target", target.current.toArray().map(n => +n.toFixed(2)));
     }
     if (process.env.NODE_ENV === "development") state.gl.domElement.dataset.worldState = JSON.stringify({ level, region: region.id, checkpoint: checkpoint.id, moving: !!movement, position: hero.position.toArray(), camera: camera.position.toArray() });
   }, -.5);

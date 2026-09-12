@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Monitor, ChevronDown } from "lucide-react";
 import { useGraphicsQuality, type GraphicsPreset } from "./GraphicsQuality";
@@ -18,6 +18,13 @@ const PRESET_ORDER: GraphicsPreset[] = ["ultra", "high", "medium", "low", "potat
 export default function GraphicsSettings() {
   const { preset, isAuto, setPreset, resumeAuto } = useGraphicsQuality();
   const [open, setOpen] = useState(false);
+
+  // Allow the TopHUD settings button to open this menu.
+  useEffect(() => {
+    const openMenu = () => setOpen(true);
+    window.addEventListener("ascend-open-graphics", openMenu);
+    return () => window.removeEventListener("ascend-open-graphics", openMenu);
+  }, []);
 
   const handleSelect = (value: string) => {
     if (value === "auto") {

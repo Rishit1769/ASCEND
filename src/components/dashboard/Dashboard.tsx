@@ -1,13 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import TopHUD from "./TopHUD";
 import SideNavigation from "./SideNavigation";
 import PlayerProgress from "./PlayerProgress";
 import QuickActions from "./QuickActions";
-import { mockPlayer } from "@/data/mockPlayer";
-import { useState } from "react";
-import { WorldProgressProvider, WorldLocation, useWorldProgress } from "../game/WorldProgress";
+import QuestPanel from "./QuestPanel";
+import JourneyTeaser from "./JourneyTeaser";
+import { PlayerProvider, usePlayer } from "@/lib/playerStore";
+import { WorldProgressProvider, WorldLocation } from "../game/WorldProgress";
 import WorldMap from "./WorldMap";
 
 const GameScene = dynamic(() => import("@/components/game/GameScene"), {
@@ -15,25 +17,38 @@ const GameScene = dynamic(() => import("@/components/game/GameScene"), {
 });
 
 export default function Dashboard() {
-  return <WorldProgressProvider level={mockPlayer.level}><DashboardContent /></WorldProgressProvider>;
+  return (
+    <PlayerProvider>
+      <WorldProgressGate />
+    </PlayerProvider>
+  );
 }
 
-function DashboardContent() {
+// The world level is driven by the persistent player level (dev preview can override it).
+function WorldProgressGate() {
+  const { level } = usePlayer();
   const [mapOpen, setMapOpen] = useState(false);
-  const { level } = useWorldProgress();
-  const player = { ...mockPlayer, level };
-  return (
-    <div className="relative h-screen w-screen overflow-hidden bg-void">
-      <GameScene />
+  const [questOpen, setQuestOpen] = useState(false);
+  const [teaserOpen, setTeaserOpen] = useState(true);
+  const { isMaxLevel } = usePlayer();
 
-      <div className="pointer-events-none relative z-10 h-full w-full">
-        <TopHUD player={player} />
-        <WorldLocation />
-        <SideNavigation onMap={() => setMapOpen(true)} />
-        <PlayerProgress player={player} />
-        <QuickActions />
+  return (
+    <WorldProgressProvider level={level}>
+      <div className="relative h-[100dvh] w-screen overflow-hidden bg-void">
+        <GameScene />
+
+        <div className="pointer-events-none relative z-10 h-full w-full">
+          <TopHUD />
+          <WorldLocation />
+          <SideNavigation onMap={() => setMapOpen(true)} onQuests={() => setQuestOpen(true)} />
+          <PlayerProgress />
+          <QuickActions />
+        </div>
+
+        {mapOpen && <WorldMap onClose={() => setMapOpen(false)} />}
+        {questOpen && <QuestPanel onClose={() => setQuestOpen(false)} />}
+        {isMaxLevel && teaserOpen && <JourneyTeaser onClose={() => setTeaserOpen(false)} />}
       </div>
-      {mapOpen && <WorldMap onClose={() => setMapOpen(false)} />}
-    </div>
+    </WorldProgressProvider>
   );
 }

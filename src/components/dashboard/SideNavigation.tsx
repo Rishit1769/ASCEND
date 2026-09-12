@@ -32,7 +32,7 @@ const itemVariants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.35, ease: "easeOut" as const } },
 };
 
-export default function SideNavigation({ onMap }: { onMap: () => void }) {
+export default function SideNavigation({ onMap, onQuests }: { onMap: () => void; onQuests: () => void }) {
   const [active, setActive] = useState<NavItem>("quests");
 
   return (
@@ -41,7 +41,7 @@ export default function SideNavigation({ onMap }: { onMap: () => void }) {
       initial="hidden"
       animate="visible"
       aria-label="Main navigation"
-      className="pointer-events-auto absolute left-3 top-1/2 z-20 -translate-y-1/2 sm:left-5 md:left-8"
+      className="pointer-events-auto absolute left-3 top-1/2 z-20 -translate-y-1/2 pl-[env(safe-area-inset-left)] sm:left-5 md:left-8"
     >
       <div className="flex flex-col gap-1">
         {NAV_ITEMS.map((item) => {
@@ -52,7 +52,7 @@ export default function SideNavigation({ onMap }: { onMap: () => void }) {
             <motion.button
               key={item.id}
               variants={itemVariants}
-              onClick={() => { if (item.id === "map") onMap(); else setActive(item.id); }}
+              onClick={() => { if (item.id === "map") onMap(); else if (item.id === "quests") onQuests(); else setActive(item.id); }}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
               whileHover={{ x: 3 }}

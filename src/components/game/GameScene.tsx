@@ -1,9 +1,10 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ACESFilmicToneMapping, BackSide, PCFShadowMap, SRGBColorSpace } from "three";
+import { ACESFilmicToneMapping, BackSide, PCFShadowMap, SRGBColorSpace, type PerspectiveCamera } from "three";
 import { applyProps, Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment as SkyLighting, Html, OrbitControls } from "@react-three/drei";
+import { Environment as SkyLighting, Html, OrbitControls, useProgress } from "@react-three/drei";
+import { emitLoaderProgress, emitLoaderReady } from "@/components/ui/AscendLoaderContext";
 import ProgressionHero from "./ProgressionHero";
 import { useWorldProgress } from "./WorldProgress";
 import { resolveWorld } from "@/lib/world";
@@ -77,7 +78,43 @@ function SceneStats() {
 }
 
 function RegionReady({ onReady, regionKey }: { onReady: (key: string) => void; regionKey: string }) {
-  useEffect(() => { onReady(regionKey); console.info("[RegionManager] Ready:", regionKey); }, [onReady, regionKey]);
+  useEffect(() => {
+    onReady(regionKey);
+    if (process.env.NODE_ENV === "development") console.info("[RegionManager] Ready:", regionKey);
+  }, [onReady, regionKey]);
+  return null;
+}
+
+/**
+ * Tracks R3F asset loading progress via drei's useProgress
+ * and emits events for the HTML-layer AscendLoader to consume.
+ */
+function ProgressTracker({ regionKey }: { regionKey: string }) {
+  const { progress, active } = useProgress();
+  const prevRegionKey = useRef(regionKey);
+  const readyEmitted = useRef(false);
+
+  // Emit progress updates
+  useEffect(() => {
+    emitLoaderProgress(progress);
+  }, [progress]);
+
+  // When region changes, reset the ready-emitted flag
+  useEffect(() => {
+    if (regionKey !== prevRegionKey.current) {
+      prevRegionKey.current = regionKey;
+      readyEmitted.current = false;
+    }
+  }, [regionKey]);
+
+  // Emit ready when progress hits 100 and loading stops
+  useEffect(() => {
+    if (progress >= 100 && !active && !readyEmitted.current) {
+      readyEmitted.current = true;
+      emitLoaderReady(regionKey.split("-").slice(0, -1).join("-") || undefined);
+    }
+  }, [progress, active, regionKey]);
+
   return null;
 }
 
@@ -86,6 +123,7 @@ function SceneContent({ onReady }: { onReady: (key: string) => void }) {
   const { region } = resolveWorld(level);
   const Surface = region.id === "forest-of-resolve" ? ForestSurface : region.id === "realm-of-ascension" ? RealmSurface : CoastalTerrainProvider;
   useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
     console.info("[World] Resolved region:", region.id);
     console.info("[RegionManager] Loading:", region.id);
   }, [region.id, region.status]);
@@ -96,10 +134,27 @@ function SceneContent({ onReady }: { onReady: (key: string) => void }) {
       {region.status !== "available" && <group name="development-placeholder-region"><mesh position={[0, -1, -5]}><cylinderGeometry args={[3.5, 6, 2.5, 8]} /><meshStandardMaterial color="#4f5b5e" roughness={.88} /></mesh><mesh position={[0, .7, -5]}><torusGeometry args={[1.2, .16, 8, 20]} /><meshStandardMaterial color="#c2a464" metalness={.5} roughness={.4} /></mesh></group>}
           {region.status === "available" && <Environment region={region.id} />}
         <ProgressionHero />
+      <ProgressTracker regionKey={`${region.id}-${reloadCounter}`} />
       <RegionReady onReady={onReady} regionKey={`${region.id}-${reloadCounter}`} />
       </Surface></Suspense></ErrorBoundary>
     </group>
   );
+}
+
+/* ─── Responsive camera tuning ───────────────────────────────────── */
+// Portrait/narrow viewports get a wider vertical FOV so more world stays visible.
+function CameraTuning({ baseFov, regionId }: { baseFov: number; regionId: string }) {
+  const camera = useThree(state => state.camera) as PerspectiveCamera;
+  const size = useThree(state => state.size);
+  useEffect(() => {
+    const portrait = size.width / size.height < 1;
+    const fov = regionId === "realm-of-ascension" ? REALM_CAMERA.fov : baseFov + (portrait ? 10 : 0);
+    if (camera.fov !== fov) {
+      applyProps(camera, { fov });
+      camera.updateProjectionMatrix();
+    }
+  }, [camera, size.width, size.height, baseFov, regionId]);
+  return null;
 }
 
 /* ─── Inner scene that reads from GraphicsContext ────────────────── */
@@ -111,11 +166,16 @@ function Scene() {
   const ready = loadedRegion === `${region.id}-${reloadCounter}`;
 
   const handleCreated = useCallback(() => {
-    console.log("[ASCEND] Three.js canvas created");
+    if (process.env.NODE_ENV === "development") console.log("[ASCEND] Three.js canvas created");
   }, []);
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-0" data-world-region={region.id} data-world-level={level} data-region-status={ready ? region.status : "loading"}>
+    <div
+      className="pointer-events-none absolute inset-0 z-0"
+      {...(process.env.NODE_ENV === "development"
+        ? { "data-world-region": region.id, "data-world-level": level, "data-region-status": ready ? region.status : "loading" }
+        : {})}
+    >
       <SceneFallback />
       <Canvas
         shadows={config.shadowsEnabled ? { type: PCFShadowMap } : undefined}
@@ -132,6 +192,7 @@ function Scene() {
         onCreated={handleCreated}
       >
         {region.id === "realm-of-ascension" ? <AscensionLighting /> : region.id === "forest-of-resolve" ? <ForestLighting /> : <SceneLighting />}
+        <CameraTuning baseFov={CAMERA_FOV} regionId={region.id} />
         {process.env.NODE_ENV === "development" && <SceneStats />}
 
         {region.id === "realm-of-ascension" ? <><AscensionAtmosphere /><SkyLighting key="realm-sky" resolution={config.skyEnvResolution} frames={1} environmentIntensity={.13}><AscensionAtmosphere capture /></SkyLighting></> : config.realisticSky ? (

@@ -6,7 +6,7 @@ import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 import { useTerrainSurface } from "./terrainSurface";
-import { findSoleProbes, measureSoles } from "./heroGrounding";
+import { findSoleProbes, measureSoleCorrection, measureSoles } from "./heroGrounding";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 // Adjust these to fit your GLB character on screen.
@@ -34,6 +34,7 @@ export default function Hero({
   const { scene, animations } = useGLTF(MODEL_PATH);
   const model = useMemo(() => clone(scene), [scene]);
   const probes = useMemo(() => findSoleProbes(model), [model]);
+  const skeletons = useMemo(() => [...new Set(probes.map(p => p.mesh.skeleton))], [probes]);
   const terrain = useTerrainSurface();
   const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
   const names = useMemo(() => animations.map(clip => clip.name), [animations]);
@@ -47,10 +48,9 @@ export default function Hero({
     if (!group.current || !probes.length) return;
     mixer.update(delta);
     group.current.updateWorldMatrix(true, true);
-    const skeletons = new Set(probes.map(p => p.mesh.skeleton));
     skeletons.forEach(skeleton => skeleton.update());
-    const measurement = measureSoles(probes, terrain);
-    const correction = measurement.correction;
+    // Allocation-free hot path: reuse scratch vectors inside measureSoleCorrection.
+    const correction = measureSoleCorrection(probes, terrain);
     group.current.position.y += correction > 0 ? correction : correction * (1 - Math.exp(-delta * 18));
     group.current.updateWorldMatrix(true, true);
     skeletons.forEach(skeleton => skeleton.update());
@@ -66,7 +66,7 @@ export default function Hero({
 
   // Log available animations once on mount
   useEffect(() => {
-    console.log("[ASCEND] Available animations:", names);
+    if (process.env.NODE_ENV === "development") console.log("[ASCEND] Available animations:", names);
   }, [names]);
 
   // Own the mixer root explicitly so clip changes cannot retain bindings to an old clone.
@@ -83,7 +83,7 @@ export default function Hero({
     const previous = activeAction.current;
     activeAction.current = walk;
 
-    console.log("[ASCEND] Using hero animation:", selected);
+    if (process.env.NODE_ENV === "development") console.log("[ASCEND] Using hero animation:", selected);
 
     walk
       .reset()

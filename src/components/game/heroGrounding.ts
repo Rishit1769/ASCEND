@@ -52,3 +52,17 @@ export function measureSoles(probes: SoleProbe[], sample: GroundSampler, offset 
   });
   return { correction: Number.isFinite(correction) ? correction : 0, contacts };
 }
+
+// Allocation-free variant for the per-frame hot path (no arrays, no vectors created).
+const scratchSole = new THREE.Vector3();
+export function measureSoleCorrection(probes: SoleProbe[], sample: GroundSampler, offset = SOLE_OFFSET) {
+  let correction = -Infinity;
+  for (const probe of probes) {
+    probe.mesh.getVertexPosition(probe.vertex, scratchSole).applyMatrix4(probe.mesh.matrixWorld);
+    const hit = sample(scratchSole.x, scratchSole.z);
+    const clearance = scratchSole.y - hit.point.y;
+    const value = offset - clearance;
+    if (value > correction) correction = value;
+  }
+  return Number.isFinite(correction) ? correction : 0;
+}
