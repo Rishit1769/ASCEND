@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "assets:fetch": "node scripts/fetch-environment.mjs",
-    "assets:build": "node scripts/optimize-environment.mjs"
+    "assets:build": "node scripts/optimize-environment.mjs",
+    "assets:realism": "node scripts/fetch-realism-assets.mjs",
+    "test:grounding": "node scripts/test-grounding.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

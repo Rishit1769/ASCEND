@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useMemo, useState } from "react";
-import { useGLTF, useAnimations } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
@@ -35,7 +35,9 @@ export default function Hero({
   const model = useMemo(() => clone(scene), [scene]);
   const probes = useMemo(() => findSoleProbes(model), [model]);
   const terrain = useTerrainSurface();
-  const { names, actions } = useAnimations(animations, model);
+  const mixer = useMemo(() => new THREE.AnimationMixer(model), [model]);
+  const names = useMemo(() => animations.map(clip => clip.name), [animations]);
+  const activeAction = useRef<THREE.AnimationAction | null>(null);
   const [previewClip] = useState(() => process.env.NODE_ENV === "development" && typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("heroAnimation") : null);
   const selected = animation ?? (previewClip && names.includes(previewClip) ? previewClip : "WALK_player_Root");
   const debugTime = useRef(0);
@@ -43,6 +45,7 @@ export default function Hero({
   // Runs after the animation mixer. World grounding is outside the untouched animated rig.
   useFrame(({ gl }, delta) => {
     if (!group.current || !probes.length) return;
+    mixer.update(delta);
     group.current.updateMatrixWorld(true);
     const skeletons = new Set(probes.map(p => p.mesh.skeleton));
     skeletons.forEach(skeleton => skeleton.update());
@@ -55,7 +58,7 @@ export default function Hero({
       debugTime.current += delta;
       if (debugTime.current > .5) {
         const grounded = measureSoles(probes, terrain);
-        gl.domElement.dataset.heroGrounding = JSON.stringify({ animation: selected, rootY: group.current.position.y, probeCount: probes.length, minClearance: Math.min(...grounded.contacts.map(p => p.clearance)), contacts: grounded.contacts });
+        gl.domElement.dataset.heroGrounding = JSON.stringify({ animation: selected, animationTime: activeAction.current?.time, animationWeight: activeAction.current?.getEffectiveWeight(), rootY: group.current.position.y, probeCount: probes.length, minClearance: Math.min(...grounded.contacts.map(p => p.clearance)), contacts: grounded.contacts });
         debugTime.current = 0;
       }
     }
@@ -66,17 +69,18 @@ export default function Hero({
     console.log("[ASCEND] Available animations:", names);
   }, [names]);
 
-  // Play WALK_player_Root animation with loop and cleanup
+  // Own the mixer root explicitly so clip changes cannot retain bindings to an old clone.
   useEffect(() => {
-    const walk = actions[selected];
-
-    if (!walk) {
+    const clip = animations.find(clip => clip.name === selected);
+    if (!clip) {
       console.warn(
         "Using hero animation:",
         selected
       );
       return;
     }
+    const walk = mixer.clipAction(clip, model);
+    activeAction.current = walk;
 
     console.log("[ASCEND] Using hero animation:", selected);
 
@@ -89,8 +93,10 @@ export default function Hero({
     return () => {
       walk.fadeOut(0.25);
       walk.stop();
+      mixer.uncacheAction(clip, model);
+      activeAction.current = null;
     };
-  }, [actions, selected]);
+  }, [animations, mixer, model, selected]);
 
   // Enable shadows on all meshes
   useEffect(() => {

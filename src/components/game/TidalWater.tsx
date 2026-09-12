@@ -10,26 +10,29 @@ import { useGraphicsQuality } from "./GraphicsQuality";
 import { useReducedMotion } from "./useReducedMotion";
 import { SUN_DIRECTION } from "./skyConfig";
 
-function reflectionUpdater(reflector: Reflector, camera: THREE.Camera, quality: string): THREE.Object3D["onBeforeRender"] {
+function reflectionUpdater(reflector: Reflector, camera: THREE.Camera, cadenceMs: number): THREE.Object3D["onBeforeRender"] {
   const renderReflection = reflector.onBeforeRender;
   let last = -Infinity;
+  let lastFrame = -1;
   const previousCamera = new THREE.Matrix4();
   return function (renderer, scene, viewCamera, geometry, material, group) {
     if (viewCamera !== camera || scene.overrideMaterial) return;
+    if (lastFrame === reflector.userData.frame) return;
     const now = performance.now();
     const moved = !previousCamera.equals(camera.matrixWorld);
-    const cadence = quality === "high" ? 1000 / 60 : quality === "medium" ? 1000 / 24 : 1000 / 8;
-    if (moved || now - last >= cadence) {
+    if (moved || now - last >= cadenceMs) {
       renderReflection.call(reflector, renderer, scene, viewCamera, geometry, material, group);
       previousCamera.copy(camera.matrixWorld);
       last = now;
+      lastFrame = reflector.userData.frame;
+      reflector.userData.reflectionUpdates = (reflector.userData.reflectionUpdates ?? 0) + 1;
     }
   };
 }
 
 export default function TidalWater() {
   const sample = useTerrainSurface();
-  const quality = useGraphicsQuality();
+  const { config } = useGraphicsQuality();
   const reduced = useReducedMotion();
   const camera = useThree(state => state.camera);
   const normals = useTexture("/environment/waternormals.jpg");
@@ -52,7 +55,7 @@ export default function TidalWater() {
     normal.wrapS = normal.wrapT = THREE.RepeatWrapping;
     normal.colorSpace = THREE.NoColorSpace;
     normal.needsUpdate = true;
-    const resolution = quality === "high" ? 1024 : quality === "medium" ? 512 : 128;
+    const resolution = config.waterResolution;
     const reflector = new Reflector(new THREE.PlaneGeometry(160, 160), { textureWidth: resolution, textureHeight: resolution, clipBias: .003, multisample: 0 });
     reflector.name = "shallow-coastal-water";
     reflector.rotation.x = -Math.PI / 2;
@@ -111,16 +114,18 @@ export default function TidalWater() {
         #include <fog_fragment>
       }`;
     material.needsUpdate = true;
-    reflector.onBeforeRender = reflectionUpdater(reflector, camera, quality);
+    reflector.onBeforeRender = reflectionUpdater(reflector, camera, config.waterReflectionCadence);
     return reflector;
-  }, [quality, normals, bathymetry, camera]);
+  }, [config.waterResolution, config.waterReflectionCadence, normals, bathymetry, camera]);
   useEffect(() => () => {
     (water.material as THREE.ShaderMaterial).uniforms.normalMap.value.dispose();
     water.dispose(); water.geometry.dispose();
   }, [water]);
-  useFrame((_, delta) => {
+  useFrame(({ gl }, delta) => {
+    applyProps(water.userData, { frame: (water.userData.frame ?? 0) + 1 });
     const time = (water.material as THREE.ShaderMaterial).uniforms.time;
     if (!reduced) applyProps(time, { value: time.value + Math.min(delta, .05) });
+    if (process.env.NODE_ENV === "development" && water.userData.frame % 60 === 0) gl.domElement.dataset.waterState = JSON.stringify({ time: time.value, resolution: water.getRenderTarget().width, reflections: water.userData.reflectionUpdates });
   });
   return <primitive object={water} dispose={null} />;
 }

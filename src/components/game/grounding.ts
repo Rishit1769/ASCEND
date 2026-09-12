@@ -56,9 +56,9 @@ export function createGroundSampler(terrain: THREE.Object3D[]): GroundSampler {
 export function findDryGround(sample: GroundSampler, x: number, z: number): GroundHit {
   const center = sample(x, z);
   if (center.point.y > SEA_LEVEL + .06) return center;
-  for (const radius of [.3, .6, 1, 1.6, 2.4]) {
+  for (const radius of [.3, .6, 1, 1.6, 2.4, 3.2, 4.8, 6.4]) {
     for (let i = 0; i < 12; i++) {
-      const angle = i * Math.PI / 6;
+      const angle = i * Math.PI / 6 - Math.PI / 2;
       const hit = sample(x + Math.cos(angle) * radius, z + Math.sin(angle) * radius);
       if (hit.point.y > SEA_LEVEL + .06 && hit.normal.y > .55) return hit;
     }
@@ -88,7 +88,10 @@ export function snapToTerrain(object: THREE.Object3D, sample: GroundSampler, opt
   });
   const base = (baseBounds.isEmpty() ? initialBounds : baseBounds).getCenter(new THREE.Vector3());
   const hit = options.dry ? findDryGround(sample, base.x, base.z) : sample(base.x, base.z);
-  if (options.normalAlignment) object.quaternion.premultiply(surfaceAlignment(hit.normal, options.normalAlignment));
+  if (options.normalAlignment) {
+    const orientation = object.getWorldQuaternion(new THREE.Quaternion()).premultiply(surfaceAlignment(hit.normal, options.normalAlignment));
+    object.quaternion.copy(object.parent ? object.parent.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(orientation) : orientation);
+  }
   object.updateWorldMatrix(true, true);
   const bounds = new THREE.Box3().setFromObject(object);
   const burial = bounds.getSize(new THREE.Vector3()).y * (options.burial ?? 0);
@@ -105,5 +108,26 @@ export function snapToTerrain(object: THREE.Object3D, sample: GroundSampler, opt
   const target = position.clone().add(new THREE.Vector3(hit.point.x - base.x, groundY - bounds.min.y + (options.offset ?? 0) - burial, hit.point.z - base.z));
   object.position.copy(object.parent ? object.parent.worldToLocal(target) : target);
   object.updateWorldMatrix(true, true);
+  // A scan's lowest point may be off-center. Remove any remaining gap at its real base vertices.
+  const placedBounds = new THREE.Box3().setFromObject(object);
+  let contactGap = Infinity;
+  object.traverse(child => {
+    if (!(child instanceof THREE.Mesh)) return;
+    const count = child.geometry.getAttribute("position").count;
+    for (let i = 0; i < count; i++) {
+      child.getVertexPosition(i, vertex).applyMatrix4(child.matrixWorld);
+      if (vertex.y > placedBounds.min.y + .18) continue;
+      contactGap = Math.min(contactGap, vertex.y - sample(vertex.x, vertex.z).point.y);
+    }
+  });
+  const desiredGap = (options.offset ?? 0) - burial;
+  if (Number.isFinite(contactGap) && contactGap > desiredGap) {
+    const corrected = object.getWorldPosition(new THREE.Vector3());
+    corrected.y -= contactGap - desiredGap;
+    object.position.copy(object.parent ? object.parent.worldToLocal(corrected) : corrected);
+    object.updateWorldMatrix(true, true);
+    contactGap = desiredGap;
+  }
+  object.userData.terrainContact = { surface: hit.surface, contactGap, burial };
   return hit;
 }

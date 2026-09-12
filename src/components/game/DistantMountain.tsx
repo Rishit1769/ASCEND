@@ -1,5 +1,5 @@
 "use client";
-import { AssetLOD, EnvironmentAsset } from "./EnvironmentAsset";
+import { AssetLOD, EnvironmentAsset, GroundedAsset } from "./EnvironmentAsset";
 const FORT = "modular_fort_01_";
 export default function DistantMountain() {
   return (
@@ -25,8 +25,8 @@ export default function DistantMountain() {
       <EnvironmentAsset id="coastal_cliff_02" low width={8} position={[5, -1.6, -26]} rotation={-.4} />
       <EnvironmentAsset id="rock_moss_set_01" part="rock_moss_set_01_rock04" width={5.2} position={[-3.8, -2.6, -25.2]} rotation={.7} />
       <EnvironmentAsset id="rock_moss_set_01" part="rock_moss_set_01_rock05" width={5.6} position={[3.8, -2.4, -25.9]} rotation={2.4} />
-      <EnvironmentAsset id="tree_small_02" low height={4.5} position={[-6.2, .8, -29]} rotation={1.4} />
-      <EnvironmentAsset id="fern_02" part="fern_02_b" height={.9} position={[2.8, -.2, -24.5]} />
+      <GroundedAsset id="tree_small_02" low height={4.5} position={[-6.2, 0, -29]} rotation={1.4} burial={.012} />
+      <GroundedAsset id="fern_02" part="fern_02_b" height={.9} position={[2.8, 0, -24.5]} burial={.04} normalAlignment={.15} />
     </group>
   );
 }

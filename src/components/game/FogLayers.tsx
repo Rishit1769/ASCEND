@@ -44,17 +44,22 @@ function Mist({ layer, index, reducedMotion, shaft = false }: { layer: Layer; in
           gl_FragColor=vec4(tint,alpha);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
-        }`}
+        `}
     />
   </mesh>;
 }
 
 export default function FogLayers({ reducedMotion }: FogLayersProps) {
-  const quality = useGraphicsQuality();
+  const { config } = useGraphicsQuality();
+  const layerCount = config.fogLayers;
   return (
     <>
-      {LAYERS.slice(0, quality === "low" ? 3 : quality === "medium" ? 5 : 7).map((layer, index) => <Mist key={index} layer={layer} index={index} reducedMotion={reducedMotion} />)}
-      {quality === "high" && <Mist layer={{ position: [3, 9, -31], scale: [7, 21, 1], opacity: .095 }} index={8} reducedMotion={reducedMotion} shaft />}
+      {LAYERS.slice(0, layerCount).map((layer, index) => (
+        <Mist key={index} layer={layer} index={index} reducedMotion={reducedMotion} />
+      ))}
+      {config.fogShaft && (
+        <Mist layer={{ position: [3, 9, -31], scale: [7, 21, 1], opacity: .095 }} index={8} reducedMotion={reducedMotion} shaft />
+      )}
     </>
   );
 }

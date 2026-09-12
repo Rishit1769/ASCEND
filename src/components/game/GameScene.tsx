@@ -1,33 +1,31 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef } from "react";
 import { ACESFilmicToneMapping, PCFShadowMap, SRGBColorSpace } from "three";
 import { applyProps, Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment as SkyLighting, Html, OrbitControls } from "@react-three/drei";
-import { Monitor } from "lucide-react";
 import Hero from "./Hero";
 import SceneLighting from "./SceneLighting";
 import SceneFallback from "./SceneFallback";
 import ErrorBoundary from "./ErrorBoundary";
 import Environment from "./Environment";
 import AtmosphericSky from "./AtmosphericSky";
-import { GraphicsContext, initialGraphicsQuality, type GraphicsQuality } from "./GraphicsQuality";
+import { GraphicsProvider, useGraphicsQuality } from "./GraphicsQuality";
+import GraphicsSettings from "./GraphicsSettings";
 import SceneEffects from "./SceneEffects";
 import RealisticSky from "./RealisticSky";
 
 // ─── Tweakable constants ───────────────────────────────────────────
-// Camera framing — controls how the character is composed on screen.
-// Z farther = smaller character, higher Y = looking slightly down.
-const CAMERA_POSITION: [number, number, number] = [0, 1.7, 7.2]; // Full body with a stronger world-scale composition
-const CAMERA_FOV = 40; // Field of view (wider = more environment visible)
+const CAMERA_POSITION: [number, number, number] = [0, 1.7, 7.2];
+const CAMERA_FOV = 40;
+const ORBIT_TARGET: [number, number, number] = [0, 0.8, 0];
+const ORBIT_MIN_DISTANCE = 5;
+const ORBIT_MAX_DISTANCE = 11;
+const ORBIT_MIN_POLAR = Math.PI / 3;
+const ORBIT_MAX_POLAR = Math.PI / 1.7;
+// ───────────────────────────────────────────────────────────────────
 
-// OrbitControls — camera orbit around the character
-const ORBIT_TARGET: [number, number, number] = [0, 0.8, 0]; // Look at character's torso
-const ORBIT_MIN_DISTANCE = 5;   // Minimum zoom distance
-const ORBIT_MAX_DISTANCE = 11;  // Maximum zoom distance
-const ORBIT_MIN_POLAR = Math.PI / 3;   // Upper limit (can't go above ~60° from top)
-const ORBIT_MAX_POLAR = Math.PI / 1.7; // Lower limit (can't go below ~106° from top)
-
+/* ─── Scene stats (dev only) ─────────────────────────────────────── */
 function SceneStats() {
   const gl = useThree(state => state.gl);
   useEffect(() => {
@@ -42,21 +40,20 @@ function SceneStats() {
     if (!sample.current.time) sample.current.time = now;
     sample.current.frames++;
     if (now - sample.current.time > 3000) {
-      const context = gl.getContext();
-      const pixel = new Uint8Array(4);
-      const colors = new Set<string>();
-      for (let y = 1; y <= 3; y++) for (let x = 1; x <= 3; x++) {
-        context.readPixels(Math.floor(context.drawingBufferWidth * x / 4), Math.floor(context.drawingBufferHeight * y / 4), 1, 1, context.RGBA, context.UNSIGNED_BYTE, pixel);
-        colors.add(Array.from(pixel).join(","));
-      }
-      gl.domElement.dataset.sceneStats = JSON.stringify({ fps: sample.current.frames * 1000 / (now - sample.current.time), trianglesAllPasses: gl.info.render.triangles, callsAllPasses: gl.info.render.calls, textures: gl.info.memory.textures, distinctPixelSamples: colors.size });
+      gl.domElement.dataset.sceneStats = JSON.stringify({
+        fps: sample.current.frames * 1000 / (now - sample.current.time),
+        triangles: gl.info.render.triangles,
+        calls: gl.info.render.calls,
+        textures: gl.info.memory.textures,
+        geometries: gl.info.memory.geometries,
+      });
       sample.current = { time: 0, frames: 0 };
     }
   }, 2);
   return null;
 }
-// ───────────────────────────────────────────────────────────────────
 
+/* ─── Scene fallbacks ────────────────────────────────────────────── */
 function WireframeFallback() {
   return (
     <mesh position={[0, 0, 0]}>
@@ -81,33 +78,51 @@ function SceneContent() {
   );
 }
 
-export default function GameScene() {
-  const [quality, setQuality] = useState<GraphicsQuality>(initialGraphicsQuality);
+/* ─── Inner scene that reads from GraphicsContext ────────────────── */
+function Scene() {
+  const { config, preset } = useGraphicsQuality();
+
   const handleCreated = useCallback(() => {
     console.log("[ASCEND] Three.js canvas created");
   }, []);
 
   return (
-    <GraphicsContext.Provider value={quality}>
     <div className="pointer-events-none absolute inset-0 z-0">
       <SceneFallback />
       <Canvas
-        shadows={{ type: PCFShadowMap }}
+        shadows={config.shadowsEnabled ? { type: PCFShadowMap } : undefined}
         camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV }}
         style={{ pointerEvents: "auto", cursor: "grab" }}
-        gl={{ antialias: true, alpha: true, outputColorSpace: SRGBColorSpace, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
-        dpr={quality === "high" ? [1, 1.5] : quality === "medium" ? [1, 1.25] : 1}
+        gl={{
+          antialias: true,
+          alpha: true,
+          outputColorSpace: SRGBColorSpace,
+          toneMapping: ACESFilmicToneMapping,
+          toneMappingExposure: 1.1,
+        }}
+        dpr={config.dprMax}
         onCreated={handleCreated}
       >
         <SceneLighting />
         {process.env.NODE_ENV === "development" && <SceneStats />}
-        <Suspense fallback={<AtmosphericSky />}>
-          <RealisticSky />
-          <SkyLighting resolution={quality === "high" ? 256 : 128} frames={1} environmentIntensity={.65}>
-            <RealisticSky capture />
-          </SkyLighting>
-        </Suspense>
+
+        {config.realisticSky ? (
+          <Suspense fallback={<AtmosphericSky />}>
+            <RealisticSky />
+            <SkyLighting
+              resolution={config.skyEnvResolution}
+              frames={1}
+              environmentIntensity={config.skyEnvIntensity}
+            >
+              <RealisticSky capture />
+            </SkyLighting>
+          </Suspense>
+        ) : (
+          <AtmosphericSky />
+        )}
+
         <fogExp2 attach="fog" args={["#687f91", 0.022]} />
+
         <OrbitControls
           target={ORBIT_TARGET}
           enablePan={false}
@@ -120,32 +135,81 @@ export default function GameScene() {
           enableDamping={true}
           dampingFactor={0.05}
         />
-        {quality === "low" && <ContactShadows
-          position={[0, -1.08, 0]}
-          opacity={0.42}
-          scale={3.8}
-          blur={2.4}
-          far={2.6}
-          resolution={256}
-          color="#05070b"
-        />}
+
+        {config.contactShadows && (
+          <ContactShadows
+            position={[0, -1.08, 0]}
+            opacity={0.42}
+            scale={3.8}
+            blur={2.4}
+            far={2.6}
+            resolution={256}
+            color="#05070b"
+          />
+        )}
+
         <SceneContent />
         <SceneEffects />
       </Canvas>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-16" style={{ background: "linear-gradient(#080c14b3, transparent)" }} />
+
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-16"
+        style={{ background: "linear-gradient(#080c14b3, transparent)" }}
+      />
     </div>
-    <label className="pointer-events-auto absolute right-4 top-16 z-20 flex items-center gap-1.5 rounded border border-white/15 bg-black/40 px-2 py-1 text-[10px] text-white/70" title="Graphics quality">
-      <Monitor size={12} aria-hidden="true" />
-      <select aria-label="Graphics quality" className="cursor-pointer bg-transparent outline-none focus:text-white" value={quality} onChange={event => {
-        const value = event.target.value as GraphicsQuality;
-        setQuality(value);
-        try { localStorage.setItem("ascend-graphics", value); } catch { /* Quality still applies when storage is disabled. */ }
-      }}>
-        <option value="high" className="bg-neutral-900">High</option>
-        <option value="medium" className="bg-neutral-900">Medium</option>
-        <option value="low" className="bg-neutral-900">Low</option>
-      </select>
-    </label>
-    </GraphicsContext.Provider>
+  );
+}
+
+/* ─── Dev performance debug panel ────────────────────────────────── */
+function DevStats() {
+  const { preset, config, isAuto, deviceProfile } = useGraphicsQuality();
+  const [stats, setStats] = useState<{ fps: number; triangles: number; calls: number; textures: number } | null>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const el = document.querySelector("[data-scene-stats]");
+      if (el) {
+        try { setStats(JSON.parse(el.getAttribute("data-scene-stats") ?? "null")); } catch { /* ignore */ }
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (process.env.NODE_ENV !== "development") return null;
+
+  return (
+    <div
+      className="pointer-events-none absolute bottom-24 left-3 z-30 rounded p-2 text-[9px] leading-tight text-white/50"
+      style={{
+        background: "rgba(0,0,0,0.6)",
+        font: "monospace",
+        border: "1px solid rgba(255,255,255,0.1)",
+      }}
+    >
+      <div>Preset: {preset} {isAuto ? "(auto)" : "(manual)"}</div>
+      <div>GPU tier: {deviceProfile.gpuTier} | Cores: {deviceProfile.cores} | Mem: {deviceProfile.memory ?? "?"}GB</div>
+      <div>DPR: {config.dprMax} | Shadows: {config.shadowsEnabled ? `${config.shadowMapSize[0]}px` : "off"}</div>
+      {stats && (
+        <>
+          <div>FPS: {stats.fps.toFixed(0)} | Triangles: {(stats.triangles / 1000).toFixed(1)}k</div>
+          <div>Draw calls: {stats.calls} | Textures: {stats.textures}</div>
+        </>
+      )}
+    </div>
+  );
+}
+
+import { useState } from "react";
+
+/* ─── Main export ────────────────────────────────────────────────── */
+export default function GameScene() {
+  return (
+    <GraphicsProvider>
+      <Scene />
+      <DevStats />
+      <div className="pointer-events-auto absolute right-3 top-14 z-30">
+        <GraphicsSettings />
+      </div>
+    </GraphicsProvider>
   );
 }
