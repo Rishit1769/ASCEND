@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-void: #080810;
+  --color-abyss: #0d0d1a;
+  --color-charcoal: #1a1a2e;
+  --color-slate-dark: #252540;
+  --color-stone: #3a3a50;
+  --color-bronze: #b8860b;
+  --color-gold: #d4a543;
+  --color-gold-dim: #a07830;
+  --color-gold-bright: #f0c850;
+  --color-crimson: #8b1a1a;
+  --color-crimson-dim: #5c1010;
+  --color-bone: #e8e0d0;
+  --color-ash: #9a9aaa;
+  --color-mist: #606080;
+  --color-xp-violet: #7c3aed;
+  --color-xp-violet-dim: #5b21b6;
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-void);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-stone);
+  border-radius: 2px;
+}
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s ease-in-out infinite;
+}
+
+.xp-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-xp-violet) 0%,
+    #a78bfa 50%,
+    var(--color-xp-violet) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
