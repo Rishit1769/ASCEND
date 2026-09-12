@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -33,6 +33,25 @@ function LayerGroup({
   speed: number;
 }) {
   const group = useRef<THREE.Group>(null);
+  const alphaMap = useMemo(() => {
+    const size = 64;
+    const data = new Uint8Array(size * size * 4);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const radius = Math.hypot((x + 0.5) / size * 2 - 1, (y + 0.5) / size * 2 - 1);
+        const edge = Math.pow(Math.max(0, 1 - radius), 1.8);
+        const wisps = 0.7 + 0.3 * Math.sin(x * 0.23 + Math.sin(y * 0.31));
+        const value = Math.round(255 * edge * wisps);
+        const offset = (y * size + x) * 4;
+        data.set([value, value, value, 255], offset);
+      }
+    }
+    const texture = new THREE.DataTexture(data, size, size);
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+
+  useEffect(() => () => alphaMap.dispose(), [alphaMap]);
 
   useFrame((_, delta) => {
     if (reducedMotion || !group.current) return;
@@ -51,8 +70,9 @@ function LayerGroup({
           <circleGeometry args={[1, 24]} />
           <meshBasicMaterial
             color={colors?.[index] ?? color}
+            alphaMap={alphaMap}
             transparent
-            opacity={layer.opacity}
+            opacity={layer.opacity * 2}
             depthWrite={false}
             side={THREE.DoubleSide}
           />

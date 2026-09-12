@@ -30,18 +30,18 @@ export default function Terrain() {
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
       >
-        <meshStandardMaterial color="#1B1E22" roughness={0.96} metalness={0.04} flatShading />
+        <meshStandardMaterial color="#24272b" roughness={0.96} metalness={0.04} flatShading />
       </mesh>
 
       <mesh position={[0, -1.075, -3.1]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[1.55, 4.4]} />
-        <meshStandardMaterial color="#18130F" roughness={0.86} metalness={0.02} transparent opacity={0.58} />
+        <meshStandardMaterial color="#303238" roughness={0.55} metalness={0.02} transparent opacity={0.58} />
       </mesh>
 
       <mesh position={[-1.8, -1.075, -1.8]} rotation={[-Math.PI / 2, 0.1, 0]}>
         <planeGeometry args={[2.2, 0.9]} />
         <meshStandardMaterial
-          color="#273039"
+          color="#303841"
           roughness={0.18}
           metalness={0.18}
           transparent

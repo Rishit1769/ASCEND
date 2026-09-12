@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback } from "react";
+import { ACESFilmicToneMapping, SRGBColorSpace } from "three";
 import { Canvas } from "@react-three/fiber";
 import { ContactShadows, OrbitControls } from "@react-three/drei";
 import Hero from "./Hero";
@@ -54,12 +55,12 @@ export default function GameScene() {
       <Canvas
         camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV }}
         style={{ pointerEvents: "auto", cursor: "grab" }}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, outputColorSpace: SRGBColorSpace, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
         dpr={[1, 1.5]}
         onCreated={handleCreated}
       >
         <SceneLighting />
-        <fogExp2 attach="fog" args={["#172334", 0.032]} />
+        <fogExp2 attach="fog" args={["#18283a", 0.018]} />
         <OrbitControls
           target={ORBIT_TARGET}
           enablePan={false}
@@ -84,21 +85,6 @@ export default function GameScene() {
         <SceneContent />
       </Canvas>
 
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 100%, transparent 50%, #080810 80%)",
-        }}
-      />
-
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          background:
-            "linear-gradient(to bottom, #080810 0%, transparent 15%, transparent 85%, #080810 100%)",
-        }}
-      />
     </div>
   );
 }
