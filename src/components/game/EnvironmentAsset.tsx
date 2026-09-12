@@ -2,10 +2,11 @@
 
 import { Component, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Detailed, useGLTF } from "@react-three/drei";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { normalizeAsset, useTerrainSurface } from "./terrainSurface";
 import { findDryGround, snapToTerrain, surfaceAlignment } from "./grounding";
+import { useReducedMotion } from "./useReducedMotion";
 
 type Placement = { position: [number, number, number]; scale?: number; rotation?: number; normal?: THREE.Vector3 };
 interface AssetProps {
@@ -28,14 +29,47 @@ interface AssetProps {
 
 function useArtMaterial(id: string, tint = "#ffffff") {
   const gl = useThree(state => state.gl);
+  const reduced = useReducedMotion();
+  const wind = useRef({ value: 0 });
+  useFrame((_, delta) => { if (!reduced) wind.current.value += Math.min(delta, .05); });
   return useMemo(() => (source: THREE.Material) => {
     const material = source.clone();
     if (!(material instanceof THREE.MeshStandardMaterial)) return material;
     material.color.multiply(new THREE.Color(tint));
+    for (const key of ["map", "emissiveMap"] as const) if (material[key]) material[key]!.colorSpace = THREE.SRGBColorSpace;
+    for (const key of ["normalMap", "roughnessMap", "metalnessMap", "aoMap"] as const) if (material[key]) material[key]!.colorSpace = THREE.NoColorSpace;
+    if (material.aoMap && material.roughnessMap) {
+      material.roughnessMap.updateMatrix();
+      material.aoMap.channel = material.roughnessMap.channel;
+      material.aoMap.matrix.copy(material.roughnessMap.matrix);
+      material.aoMap.matrixAutoUpdate = false;
+      material.aoMap.needsUpdate = true;
+    }
+    if (material instanceof THREE.MeshPhysicalMaterial) {
+      const maximum = Math.max(material.specularColor.r, material.specularColor.g, material.specularColor.b, 1);
+      material.specularColor.multiplyScalar(1 / maximum);
+    }
+    const foliage = /leaves|fern/.test(material.name);
+    if (foliage) {
+      material.side = THREE.DoubleSide;
+      material.transparent = false;
+      material.alphaTest = .45;
+      material.alphaToCoverage = true;
+      material.depthWrite = true;
+      material.roughness = .9;
+      material.onBeforeCompile = shader => {
+        shader.uniforms.shoreWind = wind.current;
+        shader.vertexShader = shader.vertexShader.replace("#include <common>", "#include <common>\nuniform float shoreWind;")
+          .replace("#include <begin_vertex>", `#include <begin_vertex>
+            transformed.x += sin(shoreWind*.7 + position.y*5. + position.z*4.) * .0025 * smoothstep(-.8,.7,position.y);`);
+        shader.fragmentShader = shader.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\nreflectedLight.indirectDiffuse *= gl_FrontFacing ? 1.0 : 1.18;");
+      };
+      material.customProgramCacheKey = () => "shore-foliage-v1";
+    }
     const stone = /cliff|rocks|rock_moss|fort/.test(id);
     if (stone) {
       material.metalness = 0;
-      material.normalScale.multiplyScalar(1.12);
+      material.normalScale.multiplyScalar(1.18);
       material.aoMapIntensity = 0.8;
       for (const key of ["map", "normalMap", "roughnessMap", "aoMap"] as const) {
         const texture = material[key];
@@ -56,6 +90,8 @@ function useArtMaterial(id: string, tint = "#ffffff") {
           .replace("#include <color_fragment>", `#include <color_fragment>
             float weather = sin(artPosition.x * .73 + sin(artPosition.z * .51)) * sin(artPosition.z * .31 + artPosition.y);
             diffuseColor.rgb *= mix(vec3(.82, .86, .83), vec3(1.04, 1.01, .96), weather * .5 + .5);
+            float damp=(1.-smoothstep(-1.68,-1.30,artPosition.y))*smoothstep(-.4,.6,weather);
+            diffuseColor.rgb *= 1.-damp*.25;
             ${id === "coast_rocks_01" ? `
               float pathCenter = sin(artPosition.z * .23) * .65;
               float path = (1.-smoothstep(.55, 1.8, abs(artPosition.x-pathCenter) + weather*.2)) * smoothstep(-26.,-22.,artPosition.z);
@@ -63,10 +99,9 @@ function useArtMaterial(id: string, tint = "#ffffff") {
               diffuseColor.rgb = mix(diffuseColor.rgb, vec3(stoneLuma)*vec3(1.24,1.16,1.0)+vec3(.018,.014,.008),path*.65);
             ` : ""}`)
           .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
-            float damp = (1.0 - smoothstep(-1.7, -.8, artPosition.y)) * smoothstep(.2, .7, weather);
-            roughnessFactor = max(roughnessFactor, mix(.86, .48, damp));`);
+            roughnessFactor = mix(max(roughnessFactor,.86),max(.28,roughnessFactor*.5),damp);`);
       };
-      material.customProgramCacheKey = () => "shore-weathering-v2-" + id;
+      material.customProgramCacheKey = () => "shore-weathering-v3-" + id;
     }
     return material;
   }, [gl, id, tint]);
@@ -191,7 +226,7 @@ function GroundedRoot({ position, rotation, burial = .035, offset = 0, normalAli
     if (!group.current) return;
     group.current.position.fromArray(position ?? [0, 0, 0]);
     group.current.rotation.set(0, rotation ?? 0, 0);
-    snapToTerrain(group.current, terrain, { offset, burial, normalAlignment, dry: true });
+    snapToTerrain(group.current, terrain, { offset, burial, normalAlignment, dry: true, footprint: /rock|fort/.test(props.id) });
   }, [position, rotation, burial, offset, normalAlignment, terrain, props.id, props.part, props.width, props.height, props.low]);
   return <group ref={group}><AssetRoot {...props} />{children}</group>;
 }

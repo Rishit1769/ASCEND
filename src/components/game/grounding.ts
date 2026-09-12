@@ -71,15 +71,38 @@ export function surfaceAlignment(normal: THREE.Vector3, amount: number) {
   return new THREE.Quaternion().setFromUnitVectors(up, up.clone().lerp(normal, THREE.MathUtils.clamp(amount, 0, .35)).normalize());
 }
 
-export function snapToTerrain(object: THREE.Object3D, sample: GroundSampler, options: { offset?: number; burial?: number; normalAlignment?: number; dry?: boolean } = {}) {
+export function snapToTerrain(object: THREE.Object3D, sample: GroundSampler, options: { offset?: number; burial?: number; normalAlignment?: number; dry?: boolean; footprint?: boolean } = {}) {
   object.updateWorldMatrix(true, true);
   const position = object.getWorldPosition(new THREE.Vector3());
-  const hit = options.dry ? findDryGround(sample, position.x, position.z) : sample(position.x, position.z);
+  const initialBounds = new THREE.Box3().setFromObject(object);
+  const baseBounds = new THREE.Box3();
+  const vertex = new THREE.Vector3();
+  // Tree canopies and off-center GLBs do not identify the actual point of support.
+  object.traverse(child => {
+    if (!(child instanceof THREE.Mesh)) return;
+    const count = child.geometry.getAttribute("position").count;
+    for (let i = 0; i < count; i++) {
+      child.getVertexPosition(i, vertex).applyMatrix4(child.matrixWorld);
+      if (vertex.y <= initialBounds.min.y + .12) baseBounds.expandByPoint(vertex);
+    }
+  });
+  const base = (baseBounds.isEmpty() ? initialBounds : baseBounds).getCenter(new THREE.Vector3());
+  const hit = options.dry ? findDryGround(sample, base.x, base.z) : sample(base.x, base.z);
   if (options.normalAlignment) object.quaternion.premultiply(surfaceAlignment(hit.normal, options.normalAlignment));
   object.updateWorldMatrix(true, true);
   const bounds = new THREE.Box3().setFromObject(object);
   const burial = bounds.getSize(new THREE.Vector3()).y * (options.burial ?? 0);
-  const target = position.clone().add(new THREE.Vector3(hit.point.x - position.x, hit.point.y - bounds.min.y + (options.offset ?? 0) - burial, hit.point.z - position.z));
+  let groundY = hit.point.y;
+  if (options.footprint) {
+    const heights = [groundY];
+    for (const x of [bounds.min.x, bounds.max.x]) for (const z of [bounds.min.z, bounds.max.z]) {
+      const y = sample(x + hit.point.x - base.x, z + hit.point.z - base.z).point.y;
+      if (!options.dry || y > SEA_LEVEL) heights.push(y);
+    }
+    heights.sort((a, b) => a - b);
+    groundY = heights[Math.floor((heights.length - 1) * .25)];
+  }
+  const target = position.clone().add(new THREE.Vector3(hit.point.x - base.x, groundY - bounds.min.y + (options.offset ?? 0) - burial, hit.point.z - base.z));
   object.position.copy(object.parent ? object.parent.worldToLocal(target) : target);
   object.updateWorldMatrix(true, true);
   return hit;

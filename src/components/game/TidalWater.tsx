@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { applyProps, useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
 import * as THREE from "three";
@@ -9,6 +9,23 @@ import { useTerrainSurface } from "./terrainSurface";
 import { useGraphicsQuality } from "./GraphicsQuality";
 import { useReducedMotion } from "./useReducedMotion";
 import { SUN_DIRECTION } from "./skyConfig";
+
+function reflectionUpdater(reflector: Reflector, camera: THREE.Camera, quality: string): THREE.Object3D["onBeforeRender"] {
+  const renderReflection = reflector.onBeforeRender;
+  let last = -Infinity;
+  const previousCamera = new THREE.Matrix4();
+  return function (renderer, scene, viewCamera, geometry, material, group) {
+    if (viewCamera !== camera || scene.overrideMaterial) return;
+    const now = performance.now();
+    const moved = !previousCamera.equals(camera.matrixWorld);
+    const cadence = quality === "high" ? 1000 / 60 : quality === "medium" ? 1000 / 24 : 1000 / 8;
+    if (moved || now - last >= cadence) {
+      renderReflection.call(reflector, renderer, scene, viewCamera, geometry, material, group);
+      previousCamera.copy(camera.matrixWorld);
+      last = now;
+    }
+  };
+}
 
 export default function TidalWater() {
   const sample = useTerrainSurface();
@@ -31,9 +48,10 @@ export default function TidalWater() {
   useEffect(() => () => bathymetry.dispose(), [bathymetry]);
 
   const water = useMemo(() => {
-    normals.wrapS = normals.wrapT = THREE.RepeatWrapping;
-    normals.colorSpace = THREE.NoColorSpace;
-    normals.needsUpdate = true;
+    const normal = normals.clone();
+    normal.wrapS = normal.wrapT = THREE.RepeatWrapping;
+    normal.colorSpace = THREE.NoColorSpace;
+    normal.needsUpdate = true;
     const resolution = quality === "high" ? 1024 : quality === "medium" ? 512 : 128;
     const reflector = new Reflector(new THREE.PlaneGeometry(160, 160), { textureWidth: resolution, textureHeight: resolution, clipBias: .003, multisample: 0 });
     reflector.name = "shallow-coastal-water";
@@ -44,7 +62,7 @@ export default function TidalWater() {
     material.depthWrite = false;
     material.fog = true;
     Object.assign(material.uniforms, THREE.UniformsUtils.clone(THREE.UniformsLib.fog), {
-      normalMap: { value: normals }, depthMap: { value: bathymetry }, time: { value: 0 }, sun: { value: SUN_DIRECTION },
+      normalMap: { value: normal }, depthMap: { value: bathymetry }, time: { value: 0 }, sun: { value: SUN_DIRECTION },
       shallow: { value: new THREE.Color("#496c68") }, deep: { value: new THREE.Color("#162b2f") },
       texel: { value: 1 / resolution },
     });
@@ -93,25 +111,16 @@ export default function TidalWater() {
         #include <fog_fragment>
       }`;
     material.needsUpdate = true;
-    const renderReflection = reflector.onBeforeRender;
-    let last = -Infinity;
-    const previousCamera = new THREE.Matrix4();
-    reflector.onBeforeRender = function (renderer, scene, viewCamera, geometry, mat, group) {
-      if (viewCamera !== camera || scene.overrideMaterial) return;
-      const now = performance.now();
-      const moved = !previousCamera.equals(camera.matrixWorld);
-      const cadence = quality === "high" ? 1000 / 60 : quality === "medium" ? 1000 / 24 : 1000 / 8;
-      if (moved || now - last >= cadence) {
-        renderReflection.call(this, renderer, scene, viewCamera, geometry, mat, group);
-        previousCamera.copy(camera.matrixWorld);
-        last = now;
-      }
-    };
+    reflector.onBeforeRender = reflectionUpdater(reflector, camera, quality);
     return reflector;
   }, [quality, normals, bathymetry, camera]);
-  useEffect(() => () => { water.dispose(); water.geometry.dispose(); }, [water]);
+  useEffect(() => () => {
+    (water.material as THREE.ShaderMaterial).uniforms.normalMap.value.dispose();
+    water.dispose(); water.geometry.dispose();
+  }, [water]);
   useFrame((_, delta) => {
-    if (!reduced) (water.material as THREE.ShaderMaterial).uniforms.time.value += Math.min(delta, .05);
+    const time = (water.material as THREE.ShaderMaterial).uniforms.time;
+    if (!reduced) applyProps(time, { value: time.value + Math.min(delta, .05) });
   });
   return <primitive object={water} dispose={null} />;
 }

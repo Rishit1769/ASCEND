@@ -38,6 +38,7 @@ assert(Math.abs(sample(0, 0).point.y + 1.08) < .001);
 for (const clip of hero.animations) {
   const model = clone(hero.scene);
   const probes = findSoleProbes(model);
+  const allBootVertices = findSoleProbes(model, true);
   assert(probes.length >= 6, "Both boot soles must have multiple probes");
   const world = new THREE.Group();
   const scaled = new THREE.Group(); scaled.scale.setScalar(1.2); scaled.rotation.y = Math.PI;
@@ -46,7 +47,7 @@ for (const clip of hero.animations) {
   mixer.clipAction(clip).play();
   const skeletons = new Set(probes.map(p => p.mesh.skeleton));
   const update = () => { world.updateMatrixWorld(true); skeletons.forEach(s => s.update()); };
-  let groundedY = 0, minClearance = Infinity, oldMinClearance = Infinity;
+  let groundedY = 0, minClearance = Infinity, oldMinClearance = Infinity, fullBootClearance = Infinity;
   const frames = Math.ceil(clip.duration * 60) * 2;
   for (let frame = 0; frame < frames; frame++) {
     mixer.update(1 / 60);
@@ -57,9 +58,11 @@ for (const clip of hero.animations) {
     groundedY += correction > 0 ? correction : correction * (1 - Math.exp(-18 / 60));
     world.position.y = groundedY; update();
     minClearance = Math.min(minClearance, ...measureSoles(probes, sample).contacts.map(p => p.clearance));
+    if (frame % 4 === 0) fullBootClearance = Math.min(fullBootClearance, ...measureSoles(allBootVertices, sample).contacts.map(p => p.clearance));
   }
   assert(minClearance >= SOLE_OFFSET - .001, `${clip.name}: sole penetration ${minClearance}`);
-  console.log(JSON.stringify({ clip: clip.name, frames, probes: probes.length, oldMinClearance, minClearance, finalRootY: groundedY }));
+  assert(fullBootClearance >= -.005, `${clip.name}: an unprobed boot vertex penetrates ${fullBootClearance}`);
+  console.log(JSON.stringify({ clip: clip.name, frames, probes: probes.length, allBootVertices: allBootVertices.length, oldMinClearance, minClearance, fullBootClearance, finalRootY: groundedY }));
   mixer.stopAllAction(); mixer.uncacheRoot(model);
 }
 

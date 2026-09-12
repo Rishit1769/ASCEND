@@ -5,7 +5,7 @@ export const SOLE_OFFSET = .035;
 export type SoleProbe = { mesh: THREE.SkinnedMesh; vertex: number; side: string };
 
 // Find actual boot vertices weighted to foot/toe bones, rather than guessing a bone-to-sole offset.
-export function findSoleProbes(root: THREE.Object3D): SoleProbe[] {
+export function findSoleProbes(root: THREE.Object3D, allBootVertices = false): SoleProbe[] {
   root.updateMatrixWorld(true);
   const candidates: Record<string, { probe: SoleProbe; point: THREE.Vector3 }[]> = { L: [], R: [] };
   root.traverse(object => {
@@ -27,6 +27,7 @@ export function findSoleProbes(root: THREE.Object3D): SoleProbe[] {
   });
   return Object.values(candidates).flatMap(points => {
     if (!points.length) return [];
+    if (allBootVertices) return points.map(p => p.probe);
     const bottom = Math.min(...points.map(p => p.point.y));
     const sole = points.filter(p => p.point.y < bottom + .045);
     const selected = new Set<typeof sole[number]>();
