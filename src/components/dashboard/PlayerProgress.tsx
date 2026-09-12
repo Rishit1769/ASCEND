@@ -23,7 +23,7 @@ export default function PlayerProgress() {
       >
         <div className="mb-2.5 flex items-baseline justify-between sm:mb-3">
           <div className="flex items-baseline gap-1.5">
-            <span style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--color-forge-text)", opacity: 0.5 }}>
+            <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--color-forge-text)", opacity: 0.5 }}>
               Level
             </span>
             <motion.span
@@ -37,7 +37,7 @@ export default function PlayerProgress() {
               {level}
             </motion.span>
           </div>
-          <span style={{ fontSize: "9px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-forge-text)", opacity: 0.45 }}>
+          <span style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-forge-text)", opacity: 0.45 }}>
             {region.name}
           </span>
         </div>
@@ -53,11 +53,11 @@ export default function PlayerProgress() {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="tabular-nums" style={{ fontSize: "9px", color: "var(--color-forge-text)", opacity: 0.5 }}>
+          <span className="tabular-nums" style={{ fontSize: "10px", color: "var(--color-forge-text)", opacity: 0.5 }}>
             {isMaxLevel ? "MVP complete — future realms coming soon" : `${xp.toLocaleString()} / ${xpRequired.toLocaleString()} XP`}
           </span>
           {!isMaxLevel && (
-            <span className="tabular-nums" style={{ fontSize: "9px", color: "var(--color-forge-text)", opacity: 0.4 }}>{xpPercent}%</span>
+            <span className="tabular-nums" style={{ fontSize: "10px", color: "var(--color-forge-text)", opacity: 0.4 }}>{xpPercent}%</span>
           )}
         </div>
       </div>

@@ -27,7 +27,7 @@ export default function TopHUD() {
         >
           ASCEND
         </span>
-        <span className="hidden sm:inline" style={{ fontSize: "9px", letterSpacing: "0.18em", color: "var(--color-forge-text)", opacity: 0.45 }}>
+        <span className="hidden sm:inline" style={{ fontSize: "10px", letterSpacing: "0.18em", color: "var(--color-forge-text)", opacity: 0.45 }}>
           YOUR LIFE · YOUR QUEST · YOUR LEVEL
         </span>
       </div>
@@ -37,13 +37,13 @@ export default function TopHUD() {
         <div className="forge-counter flex items-center gap-1.5 px-2.5 py-1.5 sm:gap-2 sm:px-3" style={{ clipPath: "polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))" }}>
           <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: "#8b3a1a" }} />
           <span className="text-[11px] font-bold tabular-nums sm:text-xs" style={{ color: "var(--color-forge-text-hover)" }}>{streak}</span>
-          <span className="hidden sm:inline" style={{ fontSize: "9px", color: "var(--color-forge-text)", opacity: 0.5 }}>streak</span>
+          <span className="hidden sm:inline" style={{ fontSize: "10px", color: "var(--color-forge-text)", opacity: 0.5 }}>streak</span>
         </div>
 
         <div className="forge-counter flex items-center gap-1.5 px-2.5 py-1.5 sm:gap-2 sm:px-3" style={{ clipPath: "polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))" }}>
           <Trophy className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: "var(--color-forge-text-active)" }} />
           <span className="text-[11px] font-bold tabular-nums sm:text-xs" style={{ color: "var(--color-forge-text-active)" }}>{gold.toLocaleString()}</span>
-          <span className="hidden sm:inline" style={{ fontSize: "9px", color: "var(--color-forge-text)", opacity: 0.5 }}>gold</span>
+          <span className="hidden sm:inline" style={{ fontSize: "10px", color: "var(--color-forge-text)", opacity: 0.5 }}>gold</span>
         </div>
 
         <div className="forge-divider mx-0.5 hidden h-5 w-px sm:block" />
@@ -55,7 +55,7 @@ export default function TopHUD() {
             onClick={() => setProfileOpen(v => !v)}
             aria-label="Profile"
             aria-expanded={profileOpen}
-            className="forge-icon-btn flex h-9 w-9 items-center justify-center"
+            className="forge-icon-btn flex h-11 w-11 items-center justify-center"
             style={{ color: "var(--color-forge-text)", opacity: 0.75, clipPath: "polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))" }}
           >
             <User className="h-3.5 w-3.5" />
@@ -96,10 +96,10 @@ export default function TopHUD() {
           whileTap={{ scale: 0.94 }}
           onClick={() => window.dispatchEvent(new Event("ascend-open-graphics"))}
           aria-label="Graphics settings"
-          className="forge-icon-btn flex h-9 w-9 items-center justify-center"
+          className="forge-icon-btn flex h-11 w-11 items-center justify-center"
           style={{ color: "var(--color-forge-text)", opacity: 0.75, clipPath: "polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))" }}
         >
-          <Settings className="h-3.5 w-3.5" />
+          <Settings className="h-4 w-4" />
         </motion.button>
       </div>
     </motion.div>

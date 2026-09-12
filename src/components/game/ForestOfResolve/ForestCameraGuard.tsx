@@ -8,7 +8,7 @@ import type { OrbitControls } from "three-stdlib";
 export default function ForestCameraGuard() {
   const obstacles = useRef<{ x: number; z: number; radius: number }[]>([]);
   const collect = useRef(true);
-  useEffect(() => { collect.current = true; });
+  useEffect(() => { collect.current = true; }, []);
   useFrame(({ scene, camera, controls }) => {
     const orbit = controls as OrbitControls | undefined;
     if (!orbit) return;

@@ -1,4 +1,4 @@
-import { type Region, type RegionSlug } from "@/types/game";
+import { type Region } from "@/types/game";
 import { WORLD_REGIONS, normalizeLevel } from "./world";
 
 export const REGIONS: Region[] = WORLD_REGIONS.map(region => ({ slug: region.id, name: region.name, levelRange: [region.levelStart, region.levelEnd] }));
@@ -29,8 +29,4 @@ export function levelForTotalXp(totalXp: number, maxLevel = MVP_MAX_LEVEL): numb
   let level = 1;
   while (level < maxLevel && totalXp >= totalXpForLevel(level + 1)) level++;
   return level;
-}
-
-export function getRegionSlug(level: number): RegionSlug {
-  return getRegionForLevel(level).slug;
 }

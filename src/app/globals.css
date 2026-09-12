@@ -85,11 +85,6 @@ canvas {
   50% { text-shadow: 0 0 12px rgba(215, 180, 106, 0.6); }
 }
 
-@keyframes metallic-flash {
-  0% { background-position: -100% 0; }
-  100% { background-position: 200% 0; }
-}
-
 .animate-pulse-gold {
   animation: pulse-gold 2s ease-in-out infinite;
 }

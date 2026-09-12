@@ -2,7 +2,7 @@
 import { useEffect, useMemo } from "react";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { createForestGeometry, FOREST_QUALITY } from "./forestConfig";
+import { createForestGeometry, FOREST, FOREST_QUALITY } from "./forestConfig";
 import { useThree } from "@react-three/fiber";
 export { createForestGeometry } from "./forestConfig";
 import { useGraphicsQuality } from "../GraphicsQuality";
@@ -20,7 +20,7 @@ export default function ForestTerrain() {
     map.needsUpdate = true;
     return map;
   }), [sources, preset, gl]);
-  const geometry = useMemo(() => createForestGeometry(), []);
+  const geometry = useMemo(() => createForestGeometry(FOREST.segments[preset]), [preset]);
   useEffect(() => () => { maps.forEach(map => map.dispose()); }, [maps]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   return <mesh geometry={geometry} receiveShadow name="forest-collision-ground">

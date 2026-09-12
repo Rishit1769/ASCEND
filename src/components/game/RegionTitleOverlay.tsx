@@ -59,7 +59,7 @@ export default function RegionTitleOverlay() {
   useEffect(() => {
     if (state === "hidden") return;
     const failsafe = setTimeout(() => {
-      console.warn("[ASCEND] Region title failsafe triggered — forcing dismiss");
+      if (process.env.NODE_ENV === "development") console.warn("[ASCEND] Region title failsafe triggered — forcing dismiss");
       clearTimer();
       setState("hidden");
     }, MAX_TITLE_DURATION);

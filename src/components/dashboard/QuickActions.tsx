@@ -33,8 +33,9 @@ export default function QuickActions() {
         whileTap={{ scale: 0.96 }}
         onClick={() => setShowModal(true)}
         aria-label="Create new quest"
-        className="pointer-events-auto absolute right-3 bottom-[calc(env(safe-area-inset-bottom)_+_7.5rem)] z-20 flex min-h-[44px] items-center gap-2 px-3 py-2 sm:right-6 sm:bottom-6 sm:px-4 sm:py-2.5 md:bottom-10 md:right-10"
+        className="pointer-events-auto absolute right-3 z-20 flex min-h-[44px] items-center gap-2 px-3 py-2 sm:right-6 sm:px-4 sm:py-2.5 md:right-10"
         style={{
+          bottom: "max(7.5rem, calc(env(safe-area-inset-bottom) + 7.5rem))",
           background: "rgba(18, 20, 18, 0.7)",
           border: "1px solid rgba(180, 140, 70, 0.35)",
           color: "var(--color-forge-text-active)",
@@ -73,7 +74,7 @@ export default function QuickActions() {
                 type="button"
                 onClick={() => setShowModal(false)}
                 aria-label="Close"
-                className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center text-[var(--color-forge-text)] opacity-60 transition-opacity hover:opacity-100"
+                className="absolute top-2.5 right-2.5 flex h-11 w-11 items-center justify-center text-[var(--color-forge-text)] opacity-60 transition-opacity hover:opacity-100"
               >
                 <X className="h-4 w-4" />
               </button>

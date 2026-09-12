@@ -11,12 +11,12 @@ import {
 } from "lucide-react";
 import type { NavItem } from "@/types/game";
 
-const NAV_ITEMS: { id: NavItem; label: string; icon: typeof ScrollText }[] = [
-  { id: "quests", label: "Quests", icon: ScrollText },
-  { id: "character", label: "Character", icon: Swords },
-  { id: "forge", label: "Forge", icon: Hammer },
-  { id: "journey", label: "Journey", icon: BookOpen },
-  { id: "map", label: "Map", icon: Map },
+const NAV_ITEMS: { id: NavItem; label: string; icon: typeof ScrollText; enabled: boolean }[] = [
+  { id: "quests", label: "Quests", icon: ScrollText, enabled: true },
+  { id: "character", label: "Character", icon: Swords, enabled: false },
+  { id: "forge", label: "Forge", icon: Hammer, enabled: false },
+  { id: "journey", label: "Journey", icon: BookOpen, enabled: false },
+  { id: "map", label: "Map", icon: Map, enabled: true },
 ];
 
 const containerVariants = {
@@ -33,7 +33,7 @@ const itemVariants = {
 };
 
 export default function SideNavigation({ onMap, onQuests }: { onMap: () => void; onQuests: () => void }) {
-  const [active, setActive] = useState<NavItem>("quests");
+  const [active] = useState<NavItem>("quests");
 
   return (
     <motion.nav
@@ -52,15 +52,18 @@ export default function SideNavigation({ onMap, onQuests }: { onMap: () => void;
             <motion.button
               key={item.id}
               variants={itemVariants}
-              onClick={() => { if (item.id === "map") onMap(); else if (item.id === "quests") onQuests(); else setActive(item.id); }}
+              onClick={() => { if (item.id === "map") onMap(); else if (item.id === "quests") onQuests(); }}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
-              whileHover={{ x: 3 }}
-              whileTap={{ scale: 0.97 }}
+              disabled={!item.enabled}
+              whileHover={item.enabled ? { x: 3 } : undefined}
+              whileTap={item.enabled ? { scale: 0.97 } : undefined}
               className={`group relative flex items-center gap-3 px-3 py-2.5 text-left transition-all duration-[180ms] sm:gap-3.5 sm:px-4 ${
-                isActive
-                  ? "text-[var(--color-forge-text-active)]"
-                  : "text-[var(--color-forge-text)] hover:text-[var(--color-forge-text-hover)]"
+                !item.enabled
+                  ? "cursor-not-allowed opacity-35"
+                  : isActive
+                    ? "text-[var(--color-forge-text-active)]"
+                    : "text-[var(--color-forge-text)] hover:text-[var(--color-forge-text-hover)]"
               }`}
               style={{
                 background: isActive

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { X, Lock } from "lucide-react";
 
 const FUTURE_REALMS = [
-  "Mountains of Trial",
+  "Realm of Ascension",
   "Temple of Knowledge",
   "Celestial Heights",
   "The Summit",
@@ -33,7 +33,7 @@ export default function JourneyTeaser({ onClose }: { onClose: () => void }) {
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute -top-2 right-0 flex h-10 w-10 items-center justify-center text-white/50 transition-colors hover:text-white"
+          className="absolute -top-2 right-0 flex h-11 w-11 items-center justify-center text-white/50 transition-colors hover:text-white"
         >
           <X className="h-5 w-5" />
         </button>
@@ -59,7 +59,7 @@ export default function JourneyTeaser({ onClose }: { onClose: () => void }) {
                 <Lock className="h-3.5 w-3.5" />
                 {region}
               </span>
-              <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[var(--color-forge-text)] opacity-50">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-forge-text)] opacity-50">
                 Coming Soon
               </span>
             </li>

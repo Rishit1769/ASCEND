@@ -2,7 +2,8 @@ import type { GraphicsPreset } from "../GraphicsQuality";
 import { PlaneGeometry } from "three";
 
 export const FOREST = {
-  width: 160, length: 180, centerZ: -24, segments: 160,
+  width: 160, length: 180, centerZ: -24,
+  segments: { ultra: 160, high: 140, medium: 100, low: 64, potato: 48 } as Record<GraphicsPreset, number>,
   waterLevel: -.48,
   wind: { speed: .55, strength: .014, flutter: .004 },
 };
@@ -38,8 +39,8 @@ export function randomSequence(seed: number) {
   return () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
 }
 
-export function createForestGeometry() {
-  const geometry = new PlaneGeometry(FOREST.width, FOREST.length, FOREST.segments, FOREST.segments);
+export function createForestGeometry(segments: number = 160) {
+  const geometry = new PlaneGeometry(FOREST.width, FOREST.length, segments, segments);
   geometry.rotateX(-Math.PI / 2);
   geometry.translate(0, 0, FOREST.centerZ);
   const positions = geometry.attributes.position;

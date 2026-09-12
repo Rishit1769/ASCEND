@@ -71,7 +71,7 @@ export const ASCENSION = { tier: 0, futureTiers: ["Ascension I", "Ascension II",
 export function normalizeLevel(level: number) { return Number.isFinite(level) ? Math.max(1, Math.floor(level)) : 1; }
 export function resolveWorld(level: number) {
   const safe = normalizeLevel(level);
-  const region = WORLD_REGIONS.find(region => safe >= region.levelStart && safe <= region.levelEnd)!;
+  const region = WORLD_REGIONS.find(region => safe >= region.levelStart && safe <= region.levelEnd) ?? WORLD_REGIONS[0];
   return { region, checkpoint: region.checkpoints[Math.min(safe - region.levelStart, region.checkpoints.length - 1)] };
 }
 export function levelRange(region: WorldRegion) { return Number.isFinite(region.levelEnd) ? `Levels ${region.levelStart}-${region.levelEnd}` : `Level ${region.levelStart}+`; }

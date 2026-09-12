@@ -73,10 +73,7 @@ export default function Hero({
   useEffect(() => {
     const clip = animations.find(clip => clip.name === selected);
     if (!clip) {
-      console.warn(
-        "Using hero animation:",
-        selected
-      );
+      if (process.env.NODE_ENV === "development") console.warn("Using hero animation:", selected);
       return;
     }
     const walk = mixer.clipAction(clip, model);

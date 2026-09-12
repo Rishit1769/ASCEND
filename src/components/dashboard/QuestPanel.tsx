@@ -50,7 +50,7 @@ export default function QuestPanel({ onClose }: { onClose: () => void }) {
           <button
             onClick={onClose}
             aria-label="Close quests"
-            className="flex h-9 w-9 items-center justify-center rounded border border-white/10 text-[var(--color-forge-text)] transition-colors hover:text-[var(--color-forge-text-hover)]"
+            className="flex h-11 w-11 items-center justify-center rounded border border-white/10 text-[var(--color-forge-text)] transition-colors hover:text-[var(--color-forge-text-hover)]"
           >
             <X className="h-4 w-4" />
           </button>
