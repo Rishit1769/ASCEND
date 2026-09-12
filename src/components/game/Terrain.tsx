@@ -2,6 +2,7 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { EnvironmentAsset } from "./EnvironmentAsset";
+import { SEABED_Y } from "./grounding";
 
 function GroundBed() {
   const material = useMemo(() => {
@@ -25,7 +26,7 @@ function GroundBed() {
   }, []);
   useEffect(() => () => material.dispose(), [material]);
   return (
-    <mesh position={[0, -1.85, -25]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh position={[0, SEABED_Y, -25]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[160, 160]} />
       <primitive object={material} attach="material" />
     </mesh>

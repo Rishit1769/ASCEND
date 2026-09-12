@@ -13,6 +13,7 @@ import Environment from "./Environment";
 import AtmosphericSky from "./AtmosphericSky";
 import { GraphicsContext, initialGraphicsQuality, type GraphicsQuality } from "./GraphicsQuality";
 import SceneEffects from "./SceneEffects";
+import RealisticSky from "./RealisticSky";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 // Camera framing — controls how the character is composed on screen.
@@ -100,10 +101,12 @@ export default function GameScene() {
       >
         <SceneLighting />
         {process.env.NODE_ENV === "development" && <SceneStats />}
-        <AtmosphericSky />
-        <SkyLighting resolution={128} frames={1} environmentIntensity={.65}>
-          <AtmosphericSky capture />
-        </SkyLighting>
+        <Suspense fallback={<AtmosphericSky />}>
+          <RealisticSky />
+          <SkyLighting resolution={quality === "high" ? 256 : 128} frames={1} environmentIntensity={.65}>
+            <RealisticSky capture />
+          </SkyLighting>
+        </Suspense>
         <fogExp2 attach="fog" args={["#687f91", 0.022]} />
         <OrbitControls
           target={ORBIT_TARGET}

@@ -1,33 +1,18 @@
 import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { createGroundSampler, normalizeAsset } from "./grounding";
+export { normalizeAsset } from "./grounding";
 
-export function normalizeAsset(source: THREE.Object3D, width?: number, height?: number, ground = false) {
-  const clone = source.clone(true);
-  const root = new THREE.Group();
-  root.add(clone);
-  root.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(root);
-  const size = box.getSize(new THREE.Vector3());
-  const factor = height ? height / size.y : (width ?? size.x) / size.x;
-  const center = box.getCenter(new THREE.Vector3());
-  clone.position.sub(new THREE.Vector3(center.x, box.min.y, center.z));
-  root.scale.setScalar(factor);
-  root.updateMatrixWorld(true);
-  if (ground) {
-    const ray = new THREE.Raycaster(new THREE.Vector3(0, 100, 0), new THREE.Vector3(0, -1, 0));
-    const hit = ray.intersectObject(root, true)[0];
-    if (hit) clone.position.y -= hit.point.y / factor;
-  }
-  root.updateMatrixWorld(true);
-  return root;
-}
+const surfaces = new WeakMap<THREE.Object3D, ReturnType<typeof createGroundSampler>>();
 
 // Match the two rendered scans exactly; placements follow their actual surface, not a flat Y.
-export function useGroundHeight() {
+export function useTerrainSurface() {
   const near = useGLTF("/environment/coast_rocks_01.glb");
   const far = useGLTF("/environment/coast_rocks_01-lod.glb");
   return useMemo(() => {
+    const cached = surfaces.get(near.scene);
+    if (cached) return cached;
     const a = normalizeAsset(near.scene, 35, undefined, true);
     a.position.set(0, -1.08, 0);
     const b = normalizeAsset(far.scene, 36);
@@ -35,10 +20,13 @@ export function useGroundHeight() {
     b.rotation.y = Math.PI;
     a.updateMatrixWorld(true);
     b.updateMatrixWorld(true);
-    const ray = new THREE.Raycaster();
-    return (x: number, z: number) => {
-      ray.set(new THREE.Vector3(x, 30, z), new THREE.Vector3(0, -1, 0));
-      return Math.max(-1.85, ray.intersectObjects([a, b], true)[0]?.point.y ?? -1.85);
-    };
+    const sample = createGroundSampler([a, b]);
+    surfaces.set(near.scene, sample);
+    return sample;
   }, [near.scene, far.scene]);
+}
+
+export function useGroundHeight() {
+  const sample = useTerrainSurface();
+  return useMemo(() => (x: number, z: number) => sample(x, z).point.y, [sample]);
 }

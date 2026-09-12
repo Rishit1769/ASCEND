@@ -8,6 +8,7 @@ import Ruins from "./Ruins";
 import Terrain from "./Terrain";
 import { useReducedMotion } from "./useReducedMotion";
 import { useGraphicsQuality } from "./GraphicsQuality";
+import TidalWater from "./TidalWater";
 
 export type EnvironmentRegion =
   | "forgotten_shore"
@@ -32,6 +33,7 @@ export default function Environment({ region = "forgotten_shore" }: EnvironmentP
   return (
     <group name={`environment-${region}`}>
       <Terrain />
+      <TidalWater />
       <DistantMountain />
       <Ruins />
       <FogLayers reducedMotion={reducedMotion} />

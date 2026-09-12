@@ -4,9 +4,10 @@ import { Component, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef 
 import { Detailed, useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { normalizeAsset, useGroundHeight } from "./terrainSurface";
+import { normalizeAsset, useTerrainSurface } from "./terrainSurface";
+import { findDryGround, snapToTerrain, surfaceAlignment } from "./grounding";
 
-type Placement = { position: [number, number, number]; scale?: number; rotation?: number };
+type Placement = { position: [number, number, number]; scale?: number; rotation?: number; normal?: THREE.Vector3 };
 interface AssetProps {
   id: string;
   part?: string;
@@ -19,6 +20,10 @@ interface AssetProps {
   castShadow?: boolean;
   tint?: string;
   surface?: boolean;
+  burial?: number;
+  offset?: number;
+  normalAlignment?: number;
+  children?: ReactNode;
 }
 
 function useArtMaterial(id: string, tint = "#ffffff") {
@@ -121,8 +126,12 @@ function AssetRoot({ id, part, width, height, low, ground, castShadow, tint }: A
 function ScatterRoot({ id, part, low, placements, width, height, surface, castShadow, tint }: AssetProps & { placements: Placement[] }) {
   const url = "/environment/" + id + (low ? "-lod" : "") + ".glb";
   const { scene } = useGLTF(url);
-  const groundHeight = useGroundHeight();
-  const adjusted = useMemo(() => placements.map(p => ({ ...p, position: [p.position[0], surface ? groundHeight(p.position[0], p.position[2]) - 0.04 : p.position[1], p.position[2]] as [number, number, number] })), [placements, surface, groundHeight]);
+  const terrain = useTerrainSurface();
+  const adjusted = useMemo(() => placements.map(p => {
+    if (!surface) return p;
+    const hit = findDryGround(terrain, p.position[0], p.position[2]);
+    return { ...p, position: [hit.point.x, hit.point.y - .04, hit.point.z] as [number, number, number], normal: hit.normal };
+  }), [placements, surface, terrain]);
 
   const meshes = useMemo(() => {
     const source = part ? scene.getObjectByName(part) : scene;
@@ -147,6 +156,7 @@ function MeshInstances({ mesh, placements, id, castShadow, tint }: { mesh: THREE
     placements.forEach((placement, index) => {
       transform.position.fromArray(placement.position);
       transform.rotation.set(0, placement.rotation ?? 0, 0);
+      if (placement.normal) transform.quaternion.premultiply(surfaceAlignment(placement.normal, .2));
       transform.scale.setScalar(placement.scale ?? 1);
       transform.updateMatrix();
       matrix.multiplyMatrices(transform.matrix, mesh.matrixWorld);
@@ -170,6 +180,24 @@ export function EnvironmentAsset(props: AssetProps) {
       </group>
     </AssetErrorBoundary>
   );
+}
+
+function GroundedRoot({ position, rotation, burial = .035, offset = 0, normalAlignment = 0, children, ...props }: AssetProps) {
+  const group = useRef<THREE.Group>(null);
+  const terrain = useTerrainSurface();
+  // Resolve loading here so bounds are available when the placement effect runs.
+  useGLTF("/environment/" + props.id + (props.low ? "-lod" : "") + ".glb");
+  useLayoutEffect(() => {
+    if (!group.current) return;
+    group.current.position.fromArray(position ?? [0, 0, 0]);
+    group.current.rotation.set(0, rotation ?? 0, 0);
+    snapToTerrain(group.current, terrain, { offset, burial, normalAlignment, dry: true });
+  }, [position, rotation, burial, offset, normalAlignment, terrain, props.id, props.part, props.width, props.height, props.low]);
+  return <group ref={group}><AssetRoot {...props} />{children}</group>;
+}
+
+export function GroundedAsset(props: AssetProps) {
+  return <AssetErrorBoundary fallback={null}><GroundedRoot {...props} /></AssetErrorBoundary>;
 }
 
 export function AssetLOD(props: AssetProps) {

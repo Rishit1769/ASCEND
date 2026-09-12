@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import { Object3D } from "three";
 import { useGraphicsQuality } from "./GraphicsQuality";
+import { SUN_DIRECTION } from "./skyConfig";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 // Lighting — adjust intensities/colors to taste.
@@ -9,7 +10,7 @@ const AMBIENT_INTENSITY = 0.8;
 const AMBIENT_COLOR = "#a6c5dc";
 
 const KEY_LIGHT_INTENSITY = 2.8;
-const KEY_LIGHT_POSITION: [number, number, number] = [14, 23, -8];
+const KEY_LIGHT_POSITION: [number, number, number] = [SUN_DIRECTION.x * 40, SUN_DIRECTION.y * 40, -12 + SUN_DIRECTION.z * 40];
 const KEY_LIGHT_COLOR = "#ffe9c8";
 
 const FILL_LIGHT_INTENSITY = 0.72; // Warm distant fire fill
@@ -45,7 +46,7 @@ export default function SceneLighting() {
         shadow-camera-bottom={-21}
         shadow-camera-far={75}
         shadow-bias={-0.0002}
-        shadow-normalBias={0.045}
+        shadow-normalBias={0.02}
         shadow-radius={2}
       />
 
