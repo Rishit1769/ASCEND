@@ -59,7 +59,7 @@ export default function GameScene() {
         onCreated={handleCreated}
       >
         <SceneLighting />
-        <fogExp2 attach="fog" args={["#111724", 0.035]} />
+        <fogExp2 attach="fog" args={["#172334", 0.032]} />
         <OrbitControls
           target={ORBIT_TARGET}
           enablePan={false}

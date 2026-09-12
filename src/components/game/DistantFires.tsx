@@ -17,7 +17,7 @@ export default function DistantFires({ reducedMotion }: { reducedMotion: boolean
     const time = clock.getElapsedTime();
     lights.current.forEach((light, index) => {
       if (!light) return;
-      light.intensity = 0.65 + Math.sin(time * 2.2 + FIRES[index].phase) * 0.08;
+      light.intensity = 0.78 + Math.sin(time * 2.2 + FIRES[index].phase) * 0.1;
     });
   });
 
@@ -29,14 +29,14 @@ export default function DistantFires({ reducedMotion }: { reducedMotion: boolean
             ref={(light) => {
               lights.current[index] = light;
             }}
-            color="#e39b43"
-            intensity={0.65}
+            color="#FF7A2F"
+            intensity={0.78}
             distance={5}
             decay={2}
           />
           <mesh>
             <octahedronGeometry args={[0.09, 0]} />
-            <meshBasicMaterial color="#f0b44d" />
+            <meshBasicMaterial color="#F2A93B" />
           </mesh>
           <mesh position={[0, -0.25, 0]}>
             <coneGeometry args={[0.18, 0.5, 5]} />

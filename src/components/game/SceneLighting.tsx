@@ -3,19 +3,19 @@
 // ─── Tweakable constants ───────────────────────────────────────────
 // Lighting — adjust intensities/colors to taste.
 const AMBIENT_INTENSITY = 0.72; // Global fill (lower = moodier shadows)
-const AMBIENT_COLOR = "#c8c8e0";
+const AMBIENT_COLOR = "#9AAAC2";
 
-const KEY_LIGHT_INTENSITY = 1.85; // Moonlit primary light
+const KEY_LIGHT_INTENSITY = 2.05; // Moonlit primary light
 const KEY_LIGHT_POSITION: [number, number, number] = [4, 7, 5];
-const KEY_LIGHT_COLOR = "#c2cce4";
+const KEY_LIGHT_COLOR = "#8AA7C7";
 
-const FILL_LIGHT_INTENSITY = 0.65; // Warm distant fire fill
+const FILL_LIGHT_INTENSITY = 0.72; // Warm distant fire fill
 const FILL_LIGHT_POSITION: [number, number, number] = [-3, 2, 2];
-const FILL_LIGHT_COLOR = "#d4a543";
+const FILL_LIGHT_COLOR = "#F2A93B";
 
 const RIM_LIGHT_INTENSITY = 1.1; // Cool back/edge light for separation
 const RIM_LIGHT_POSITION: [number, number, number] = [0, 3, -4];
-const RIM_LIGHT_COLOR = "#a0a0c0";
+const RIM_LIGHT_COLOR = "#8AA7C7";
 // ───────────────────────────────────────────────────────────────────
 
 export default function SceneLighting() {
@@ -47,6 +47,15 @@ export default function SceneLighting() {
         intensity={RIM_LIGHT_INTENSITY}
         color={RIM_LIGHT_COLOR}
         distance={12}
+        decay={2}
+      />
+
+      {/* Weak warm counter-rim keeps bronze armor separate from the cold shore. */}
+      <pointLight
+        position={[-4, 1.5, 3]}
+        intensity={0.28}
+        color="#E85D1F"
+        distance={7}
         decay={2}
       />
     </>
