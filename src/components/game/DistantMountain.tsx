@@ -1,64 +1,23 @@
 "use client";
-
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-
+import { AssetLOD, EnvironmentAsset } from "./EnvironmentAsset";
+const FORT = "modular_fort_01_";
 export default function DistantMountain() {
-  const beacon = useRef<THREE.Mesh>(null);
-
-  useFrame(({ clock }) => {
-    if (!beacon.current) return;
-    const pulse = 0.92 + Math.sin(clock.getElapsedTime() * 0.55) * 0.08;
-    beacon.current.scale.setScalar(pulse);
-  });
-
   return (
-    <group position={[0, -1.05, -11]}>
-      <mesh position={[-3.8, 2.2, 0]} scale={[1.5, 1.5, 1.2]}>
-        <coneGeometry args={[2.6, 6.5, 5]} />
-        <meshStandardMaterial color="#40556f" roughness={1} flatShading />
-      </mesh>
-      <mesh position={[0, 2.8, -0.5]} scale={[1.8, 1.8, 1.4]}>
-        <coneGeometry args={[2.8, 7.5, 6]} />
-        <meshStandardMaterial color="#2d4057" roughness={1} flatShading />
-      </mesh>
-      <mesh position={[4.2, 1.9, 0.3]} scale={[1.4, 1.4, 1.1]}>
-        <coneGeometry args={[2.5, 5.8, 5]} />
-        <meshStandardMaterial color="#202d3b" roughness={1} flatShading />
-      </mesh>
-
-      <group position={[0, 1.4, 1.4]}>
-        <mesh position={[0, 0.9, 0]}>
-          <boxGeometry args={[2.4, 1.7, 0.6]} />
-          <meshStandardMaterial color="#4b5968" roughness={1} />
-        </mesh>
-        <mesh position={[-0.8, 1.9, 0]}>
-          <coneGeometry args={[0.45, 1.4, 4]} />
-          <meshStandardMaterial color="#526b84" roughness={1} />
-        </mesh>
-        <mesh position={[0.8, 1.9, 0]}>
-          <coneGeometry args={[0.45, 1.4, 4]} />
-          <meshStandardMaterial color="#4b5968" roughness={1} />
-        </mesh>
-        <mesh position={[0, 0.7, 0.34]}>
-          <boxGeometry args={[0.45, 0.8, 0.03]} />
-          <meshBasicMaterial color="#5b4320" transparent opacity={0.5} />
-        </mesh>
-        <mesh position={[-0.42, 1.05, 0.34]}>
-          <boxGeometry args={[0.12, 0.22, 0.03]} />
-          <meshBasicMaterial color="#D9A441" transparent opacity={0.72} />
-        </mesh>
-        <mesh position={[0.42, 1.05, 0.34]}>
-          <boxGeometry args={[0.12, 0.22, 0.03]} />
-          <meshBasicMaterial color="#D9A441" transparent opacity={0.64} />
-        </mesh>
-        <pointLight position={[0, 1.65, 0.4]} color="#D9A441" intensity={0.32} distance={4} decay={2} />
-        <pointLight position={[0, 1.65, 0.4]} color="#8B7CFF" intensity={0.12} distance={3} decay={2} />
-        <mesh ref={beacon} position={[0, 1.65, 0.4]}>
-          <octahedronGeometry args={[0.12, 0]} />
-          <meshBasicMaterial color="#8B7CFF" transparent opacity={0.72} />
-        </mesh>
+    <group name="ascension-sanctuary">
+      <EnvironmentAsset id="coastal_cliff_02" low width={80} position={[-30, -4, -55]} rotation={0.25} />
+      <EnvironmentAsset id="coastal_cliff_02" low width={68} position={[31, -4, -66]} rotation={-0.65} />
+      <AssetLOD id="coastal_cliff_02" width={38} position={[-18, -2, -25]} rotation={0.25} />
+      <AssetLOD id="coastal_cliff_02" width={32} position={[19, -2.5, -29]} rotation={-0.4} />
+      <EnvironmentAsset id="coastal_cliff_02" low width={24} position={[0, -1.7, -32]} rotation={0.1} />
+      <group position={[0, 1.8, -25]} scale={0.65}>
+        <EnvironmentAsset id="modular_fort_01" part={FORT + "wall_thin_gate_01"} height={5.5} rotation={Math.PI / 2} />
+        <EnvironmentAsset id="modular_fort_01" part={FORT + "tower_round"} height={6} position={[-5.6, -0.4, -1.6]} />
+        <EnvironmentAsset id="modular_fort_01" part={FORT + "tower_round"} height={5.5} position={[5.6, -0.4, -1.6]} />
+        <EnvironmentAsset id="modular_fort_01" part={FORT + "wall_thick_straight_01"} height={4} position={[-4.5, -0.4, -1]} rotation={Math.PI / 2} />
+        <EnvironmentAsset id="modular_fort_01" part={FORT + "wall_thick_straight_01"} height={4} position={[4.5, -0.4, -1]} rotation={Math.PI / 2} />
+        <EnvironmentAsset id="modular_fort_01" part={FORT + "wall_stairs_straight_01"} height={3.6} position={[0, -3, 3]} rotation={Math.PI} />
+        <pointLight position={[0, 2, 1]} color="#9b8bc9" intensity={18} distance={9} />
+        <pointLight position={[-3, 2, 1]} color="#ffb66b" intensity={14} distance={7} />
       </group>
     </group>
   );

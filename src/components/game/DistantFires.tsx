@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { EnvironmentAsset } from "./EnvironmentAsset";
 
 const FIRES = [
   { position: [-4.3, -0.15, -4.8] as [number, number, number], phase: 0.4 },
@@ -34,14 +35,7 @@ export default function DistantFires({ reducedMotion }: { reducedMotion: boolean
             distance={5}
             decay={2}
           />
-          <mesh>
-            <octahedronGeometry args={[0.09, 0]} />
-            <meshBasicMaterial color="#F2A93B" />
-          </mesh>
-          <mesh position={[0, -0.25, 0]}>
-            <coneGeometry args={[0.18, 0.5, 5]} />
-            <meshStandardMaterial color="#15151d" roughness={1} />
-          </mesh>
+          <EnvironmentAsset id="wooden_lantern_01" height={0.7} position={[0, -0.9, 0]} />
         </group>
       ))}
     </>

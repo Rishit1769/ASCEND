@@ -29,7 +29,15 @@ export default function SceneLighting() {
         position={KEY_LIGHT_POSITION}
         intensity={KEY_LIGHT_INTENSITY}
         color={KEY_LIGHT_COLOR}
-        castShadow={false}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-left={-12}
+        shadow-camera-right={12}
+        shadow-camera-top={12}
+        shadow-camera-bottom={-12}
+        shadow-camera-far={50}
+        shadow-bias={-0.0002}
+        shadow-normalBias={0.03}
       />
 
       {/* Fill light — warm gold from the left for depth */}

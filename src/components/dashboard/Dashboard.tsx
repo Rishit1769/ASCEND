@@ -16,7 +16,7 @@ export default function Dashboard() {
     <div className="relative h-screen w-screen overflow-hidden bg-void">
       <GameScene />
 
-      <div className="relative z-10 h-full w-full">
+      <div className="pointer-events-none relative z-10 h-full w-full">
         <TopHUD player={mockPlayer} />
         <SideNavigation />
         <PlayerProgress player={mockPlayer} />

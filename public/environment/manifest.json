@@ -1,0 +1,437 @@
+{
+  "coastal_cliff_02": {
+    "source": "https://polyhaven.com/a/coastal_cliff_02",
+    "license": "CC0-1.0",
+    "sourceTriangles": 943284,
+    "highTriangles": 69995,
+    "lowTriangles": 17495,
+    "bounds": {
+      "min": [
+        -20.515243530273438,
+        -0.22678735852241516,
+        -4.495181083679199
+      ],
+      "max": [
+        20.412370681762695,
+        9.824101448059082,
+        4.1525349617004395
+      ]
+    },
+    "maps": [
+      {
+        "name": "coastal_cliff_02_nor_gl",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "coastal_cliff_02_diff",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "coastal_cliff_02_rough",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
+  },
+  "coast_rocks_01": {
+    "source": "https://polyhaven.com/a/coast_rocks_01",
+    "license": "CC0-1.0",
+    "sourceTriangles": 679936,
+    "highTriangles": 44984,
+    "lowTriangles": 11243,
+    "bounds": {
+      "min": [
+        -32.151123046875,
+        -1.9757870435714722,
+        -26.881956100463867
+      ],
+      "max": [
+        27.35528564453125,
+        1.3106108903884888,
+        15.624942779541016
+      ]
+    },
+    "maps": [
+      {
+        "name": "coast_rocks_01_nor_gl",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "coast_rocks_01_diff",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "coast_rocks_01_rough",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
+  },
+  "modular_fort_01": {
+    "source": "https://polyhaven.com/a/modular_fort_01",
+    "license": "CC0-1.0",
+    "sourceTriangles": 28218,
+    "highTriangles": 28218,
+    "lowTriangles": 10037,
+    "bounds": {
+      "min": [
+        10.000000476837158,
+        -0.16934627294540405,
+        -34
+      ],
+      "max": [
+        52.669880390167236,
+        13.50274658203125,
+        37.375298738479614
+      ]
+    },
+    "maps": [
+      {
+        "name": "modular_fort_01_wall_nor_gl",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "modular_fort_01_wall_diff",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "modular_fort_01_wall_rough",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "modular_fort_01_trim_nor_gl",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "modular_fort_01_trim_diff",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "modular_fort_01_trim_rough",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "modular_fort_01_plaster_nor_gl",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "modular_fort_01_plaster_diff",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "modular_fort_01_plaster_rough",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
+  },
+  "fern_02": {
+    "source": "https://polyhaven.com/a/fern_02",
+    "license": "CC0-1.0",
+    "sourceTriangles": 6232,
+    "highTriangles": 5996,
+    "lowTriangles": 1990,
+    "bounds": {
+      "min": [
+        -0.5281425714492798,
+        -0.030510280281305313,
+        -0.421874463558197
+      ],
+      "max": [
+        1.4443871974945068,
+        0.39718443155288696,
+        1.3021531403064728
+      ]
+    },
+    "maps": [
+      {
+        "name": "fern_02_nor_gl",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "fern_02_diff-fern_02_alpha",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "fern_02_rough",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
+  },
+  "tree_small_02": {
+    "source": "https://polyhaven.com/a/tree_small_02",
+    "license": "CC0-1.0",
+    "sourceTriangles": 2062487,
+    "highTriangles": 18649,
+    "lowTriangles": 4745,
+    "bounds": {
+      "min": [
+        -1.2818994522094727,
+        -0.024031998589634895,
+        -1.3421955108642578
+      ],
+      "max": [
+        1.5881683826446533,
+        4.517306327819824,
+        2.800098180770874
+      ]
+    },
+    "maps": [
+      {
+        "name": "tree_small_02_branch_nor_gl",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "tree_small_02_branch_diff",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "tree_small_02_branch_rough",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "tree_small_02_leaves_nor_gl",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "tree_small_02_leaves_diff-tree_small_02_leaves_alpha",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "tree_small_02_leaves_rough",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "tree_small_02_nor_gl",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "tree_small_02_diff",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "tree_small_02_rough",
+        "size": [
+          1024,
+          1024
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
+  },
+  "rock_moss_set_01": {
+    "source": "https://polyhaven.com/a/rock_moss_set_01",
+    "license": "CC0-1.0",
+    "sourceTriangles": 63127,
+    "highTriangles": 18338,
+    "lowTriangles": 5044,
+    "bounds": {
+      "min": [
+        -3.9140208959579468,
+        -0.6565686464309692,
+        -3.8193808794021606
+      ],
+      "max": [
+        4.090582966804504,
+        1.1073492765426636,
+        3.1249431371688843
+      ]
+    },
+    "maps": [
+      {
+        "name": "rock_moss_set_01_nor_gl",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "rock_moss_set_01_diff",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "rock_moss_set_01_rough",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
+  },
+  "wooden_lantern_01": {
+    "source": "https://polyhaven.com/a/wooden_lantern_01",
+    "license": "CC0-1.0",
+    "sourceTriangles": 8321,
+    "highTriangles": 6010,
+    "lowTriangles": 1537,
+    "bounds": {
+      "min": [
+        -0.11051704734563828,
+        -0.011375104659236968,
+        -0.11054381728172302
+      ],
+      "max": [
+        0.1105310469865799,
+        0.5187614560127258,
+        0.12418060377240181
+      ]
+    },
+    "maps": [
+      {
+        "name": "wooden_lantern_01_nor_gl",
+        "size": [
+          512,
+          512
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "wooden_lantern_01_diff",
+        "size": [
+          512,
+          512
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "wooden_lantern_01_metal-wooden_lantern_01_rough",
+        "size": [
+          512,
+          512
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "wooden_lantern_01_glass_nor_gl",
+        "size": [
+          512,
+          512
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "wooden_lantern_01_glass_diff-wooden_lantern_01_glass_opacity",
+        "size": [
+          512,
+          512
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "wooden_lantern_01_glass_metal-wooden_lantern_01_glass_rough",
+        "size": [
+          512,
+          512
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
+  }
+}
