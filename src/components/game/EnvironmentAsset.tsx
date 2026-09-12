@@ -7,6 +7,8 @@ import * as THREE from "three";
 import { normalizeAsset, useTerrainSurface } from "./terrainSurface";
 import { findDryGround, snapToTerrain, surfaceAlignment } from "./grounding";
 import { useReducedMotion } from "./useReducedMotion";
+import { useGraphicsQuality } from "./GraphicsQuality";
+import { TERRAIN_DETAIL_GLSL, TERRAIN_COLOR_GLSL, TERRAIN_NORMAL_GLSL } from "./terrainDetail";
 
 type Placement = { position: [number, number, number]; scale?: number; rotation?: number; normal?: THREE.Vector3 };
 interface AssetProps {
@@ -28,6 +30,7 @@ interface AssetProps {
 }
 
 function useArtMaterial(id: string, tint = "#ffffff") {
+  const { preset } = useGraphicsQuality();
   const gl = useThree(state => state.gl);
   const reduced = useReducedMotion();
   const wind = useRef({ value: 0 });
@@ -74,7 +77,7 @@ function useArtMaterial(id: string, tint = "#ffffff") {
       for (const key of ["map", "normalMap", "roughnessMap", "aoMap"] as const) {
         const texture = material[key];
         if (texture) {
-          texture.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
+          texture.anisotropy = Math.min({ ultra: 16, high: 8, medium: 4, low: 2, potato: 1 }[preset], gl.capabilities.getMaxAnisotropy());
           texture.needsUpdate = true;
         }
       }
@@ -86,7 +89,7 @@ function useArtMaterial(id: string, tint = "#ffffff") {
               artLocal = instanceMatrix * artLocal;
             #endif
             artPosition = (modelMatrix * artLocal).xyz;`);
-        shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 artPosition;")
+        shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 artPosition;\n" + (preset !== "potato" ? TERRAIN_DETAIL_GLSL : ""))
           .replace("#include <color_fragment>", `#include <color_fragment>
             float weather = sin(artPosition.x * .73 + sin(artPosition.z * .51)) * sin(artPosition.z * .31 + artPosition.y);
             float strata = sin(artPosition.y * 9.5 + artPosition.x * .8 + artPosition.z * .35) * .5 + .5;
@@ -97,6 +100,7 @@ function useArtMaterial(id: string, tint = "#ffffff") {
             diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.18,.27,.2), moss*.22);
             float damp=(1.-smoothstep(-1.68,-1.30,artPosition.y))*smoothstep(-.4,.6,weather);
             diffuseColor.rgb *= 1.-damp*.25;
+            ${preset !== "potato" ? TERRAIN_COLOR_GLSL : ""}
             ${id === "coast_rocks_01" ? `
               float pathCenter = sin(artPosition.z * .23) * .65;
               float path = (1.-smoothstep(.55, 1.8, abs(artPosition.x-pathCenter) + weather*.2)) * smoothstep(-26.,-22.,artPosition.z);
@@ -105,11 +109,12 @@ function useArtMaterial(id: string, tint = "#ffffff") {
             ` : ""}`)
           .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
             roughnessFactor = mix(max(roughnessFactor,.86),max(.28,roughnessFactor*.5),damp);`);
+        if (preset === "ultra" || preset === "high" || preset === "medium") shader.fragmentShader = shader.fragmentShader.replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\n" + TERRAIN_NORMAL_GLSL);
       };
-      material.customProgramCacheKey = () => "shore-weathering-v3-" + id;
+      material.customProgramCacheKey = () => "shore-terrain-v4-" + id + preset;
     }
     return material;
-  }, [gl, id, tint]);
+  }, [gl, id, tint, preset]);
 }
 
 /* ─── Error boundary — silences missing-GLB crashes ────────────── */

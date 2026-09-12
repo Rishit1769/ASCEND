@@ -1,10 +1,12 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { ACESFilmicToneMapping, PCFShadowMap, SRGBColorSpace } from "three";
+import { ACESFilmicToneMapping, BackSide, PCFShadowMap, SRGBColorSpace } from "three";
 import { applyProps, Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment as SkyLighting, Html, OrbitControls } from "@react-three/drei";
-import Hero from "./Hero";
+import { Environment as SkyLighting, Html, OrbitControls } from "@react-three/drei";
+import ProgressionHero from "./ProgressionHero";
+import { useWorldProgress } from "./WorldProgress";
+import { resolveWorld } from "@/lib/world";
 import SceneLighting from "./SceneLighting";
 import SceneFallback from "./SceneFallback";
 import ErrorBoundary from "./ErrorBoundary";
@@ -64,15 +66,18 @@ function WireframeFallback() {
 }
 
 function SceneContent() {
+  const { level } = useWorldProgress();
+  const { region } = resolveWorld(level);
+  if (region.status !== "available") return null;
   return (
     <>
       <ErrorBoundary fallback={<Html center position={[0, 3, 0]}>Environment could not load. Reload to retry.</Html>}>
         <Suspense fallback={<Html center position={[0, 3, 0]}><span style={{ color: "#c2c9cd", fontSize: 12, whiteSpace: "nowrap" }}>Preparing The Forgotten Shore...</span></Html>}>
-          <Environment region="forgotten_shore" />
+          <Environment region={region.id} />
         </Suspense>
       </ErrorBoundary>
       <ErrorBoundary fallback={<WireframeFallback />}>
-        <Suspense fallback={null}><Hero /></Suspense>
+        <Suspense fallback={null}><ProgressionHero /></Suspense>
       </ErrorBoundary>
     </>
   );
@@ -81,13 +86,15 @@ function SceneContent() {
 /* ─── Inner scene that reads from GraphicsContext ────────────────── */
 function Scene() {
   const { config } = useGraphicsQuality();
+  const { level } = useWorldProgress();
+  const { region } = resolveWorld(level);
 
   const handleCreated = useCallback(() => {
     console.log("[ASCEND] Three.js canvas created");
   }, []);
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-0">
+    <div className="pointer-events-none absolute inset-0 z-0" data-world-region={region.id} data-world-level={level} data-region-status={region.status}>
       <SceneFallback />
       <Canvas
         shadows={config.shadowsEnabled ? { type: PCFShadowMap } : undefined}
@@ -118,12 +125,15 @@ function Scene() {
             </SkyLighting>
           </Suspense>
         ) : (
-          <AtmosphericSky />
+          <><AtmosphericSky /><SkyLighting resolution={32} frames={1} environmentIntensity={.65}>
+            <mesh><sphereGeometry args={[10, 16, 8]} /><meshBasicMaterial color="#a2b4bf" side={BackSide} /></mesh>
+          </SkyLighting></>
         )}
 
-        <fogExp2 attach="fog" args={["#687f91", 0.022]} />
+        <fogExp2 attach="fog" args={[region.atmosphere.fog, region.atmosphere.density]} />
 
         <OrbitControls
+          makeDefault
           target={ORBIT_TARGET}
           enablePan={false}
           enableZoom={true}
@@ -131,26 +141,17 @@ function Scene() {
           minDistance={ORBIT_MIN_DISTANCE}
           maxDistance={ORBIT_MAX_DISTANCE}
           minPolarAngle={ORBIT_MIN_POLAR}
-          maxPolarAngle={ORBIT_MAX_POLAR}
+          maxPolarAngle={Math.min(ORBIT_MAX_POLAR, Math.PI / 2 - .04)}
           enableDamping={true}
           dampingFactor={0.05}
         />
 
-        {config.contactShadows && (
-          <ContactShadows
-            position={[0, -1.08, 0]}
-            opacity={0.42}
-            scale={3.8}
-            blur={2.4}
-            far={2.6}
-            resolution={256}
-            color="#05070b"
-          />
-        )}
-
         <SceneContent />
         <SceneEffects />
       </Canvas>
+      {region.status !== "available" && <div key={region.id} className="absolute inset-0 flex items-center justify-center bg-black/65 px-20 text-center text-white" style={{ animation: "atlas-reveal .5s ease" }}>
+        <div className="max-w-md"><h2 className="font-serif text-2xl">{region.name}</h2><p className="mt-3 text-sm text-white/70">{region.theme}</p><p className="mt-5 text-xs text-white/60">This region awaits its environment assets. Its checkpoints are recorded in the Map.</p></div>
+      </div>}
 
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-16"

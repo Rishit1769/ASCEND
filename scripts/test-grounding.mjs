@@ -4,7 +4,8 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { MeshoptDecoder } from "meshoptimizer";
-import { createGroundSampler, normalizeAsset, snapToTerrain, surfaceAlignment } from "../src/components/game/grounding.ts";
+import { createGroundSampler, normalizeAsset, snapToTerrain, surfaceAlignment, findDryGround, SEA_LEVEL } from "../src/components/game/grounding.ts";
+import { WORLD_REGIONS, WORLD_CHECKPOINTS, resolveWorld } from "../src/lib/world.ts";
 import { findSoleProbes, measureSoles, SOLE_OFFSET } from "../src/components/game/heroGrounding.ts";
 
 // Keep real geometry, skins and clips, but omit images for a headless geometry-only test.
@@ -34,6 +35,30 @@ const b = normalizeAsset(far.scene, 36);
 b.position.set(0, -1.8, -22); b.rotation.y = Math.PI;
 const sample = createGroundSampler([a, b]);
 assert(Math.abs(sample(0, 0).point.y + 1.08) < .001);
+assert.equal(WORLD_CHECKPOINTS.length, 31);
+for (const region of WORLD_REGIONS) {
+  assert.equal(resolveWorld(region.levelStart).region.id, region.id);
+  if (Number.isFinite(region.levelEnd)) assert.equal(resolveWorld(region.levelEnd).region.id, region.id);
+}
+assert.equal(resolveWorld(100).region.id, "summit");
+for (const checkpoint of WORLD_REGIONS[0].checkpoints) {
+  const [x,,z] = checkpoint.worldPosition;
+  const hit = findDryGround(sample, x, z);
+  assert(hit.point.y > SEA_LEVEL, `${checkpoint.name}: checkpoint under water`);
+  assert.notEqual(hit.surface, "gravel-seabed");
+  console.log(JSON.stringify({ checkpoint: checkpoint.name, position: hit.point.toArray() }));
+}
+for (let i = 1; i < 5; i++) {
+  const first = WORLD_REGIONS[0].checkpoints[i-1].worldPosition;
+  const last = WORLD_REGIONS[0].checkpoints[i].worldPosition;
+  let submerged = 0;
+  for (let j = 0; j <= 100; j++) {
+    const t = j / 100;
+    if (sample(first[0]*(1-t)+last[0]*t,first[2]*(1-t)+last[2]*t).point.y < SEA_LEVEL) submerged++;
+  }
+  console.log(JSON.stringify({ route: `${i}-${i+1}`, submergedSamples: submerged }));
+  assert.equal(submerged, 0, `Route ${i}-${i+1} crosses water`);
+}
 
 for (const asset of [
   { id: "rock_moss_set_01", part: "rock_moss_set_01_rock05", width: 1.7, x: 3.8, z: -2, rotation: 2.3, burial: .08 },
@@ -80,6 +105,15 @@ for (const clip of hero.animations) {
   assert(minClearance >= SOLE_OFFSET - .001, `${clip.name}: sole penetration ${minClearance}`);
   assert(fullBootClearance >= -.005, `${clip.name}: an unprobed boot vertex penetrates ${fullBootClearance}`);
   console.log(JSON.stringify({ clip: clip.name, frames, probes: probes.length, allBootVertices: allBootVertices.length, oldMinClearance, minClearance, fullBootClearance, finalRootY: groundedY }));
+  for (const point of WORLD_REGIONS[0].checkpoints) {
+    world.position.set(point.worldPosition[0], 0, point.worldPosition[2]);
+    for (let frame = 0; frame < 120; frame++) {
+      mixer.update(1 / 60); update();
+      const contact = measureSoles(probes, sample);
+      world.position.y += contact.correction; update();
+      assert(Math.min(...measureSoles(probes, sample).contacts.map(p => p.clearance)) >= SOLE_OFFSET - .001, `${clip.name}: penetration at ${point.name}`);
+    }
+  }
   mixer.stopAllAction(); mixer.uncacheRoot(model);
 }
 

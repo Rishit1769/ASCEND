@@ -7,6 +7,7 @@ import {
   Swords,
   Hammer,
   Map,
+  BookOpen,
 } from "lucide-react";
 import type { NavItem } from "@/types/game";
 
@@ -14,7 +15,8 @@ const NAV_ITEMS: { id: NavItem; label: string; icon: typeof ScrollText }[] = [
   { id: "quests", label: "Quests", icon: ScrollText },
   { id: "character", label: "Character", icon: Swords },
   { id: "forge", label: "Forge", icon: Hammer },
-  { id: "journey", label: "Journey", icon: Map },
+  { id: "journey", label: "Journey", icon: BookOpen },
+  { id: "map", label: "Map", icon: Map },
 ];
 
 const containerVariants = {
@@ -30,7 +32,7 @@ const itemVariants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.35, ease: "easeOut" as const } },
 };
 
-export default function SideNavigation() {
+export default function SideNavigation({ onMap }: { onMap: () => void }) {
   const [active, setActive] = useState<NavItem>("quests");
 
   return (
@@ -50,7 +52,7 @@ export default function SideNavigation() {
             <motion.button
               key={item.id}
               variants={itemVariants}
-              onClick={() => setActive(item.id)}
+              onClick={() => { if (item.id === "map") onMap(); else setActive(item.id); }}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
               whileHover={{ x: 3 }}

@@ -21,6 +21,8 @@ export type RegionSlug =
   | "forest-of-resolve"
   | "mountains-of-trial"
   | "temple-of-knowledge"
+  | "realm-of-ascension"
+  | "celestial-heights"
   | "summit";
 
 export interface Region {
@@ -29,4 +31,4 @@ export interface Region {
   levelRange: [number, number];
 }
 
-export type NavItem = "quests" | "character" | "forge" | "journey";
+export type NavItem = "quests" | "character" | "forge" | "journey" | "map";

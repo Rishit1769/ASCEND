@@ -39,20 +39,20 @@ export default function Hero({
   const names = useMemo(() => animations.map(clip => clip.name), [animations]);
   const activeAction = useRef<THREE.AnimationAction | null>(null);
   const [previewClip] = useState(() => process.env.NODE_ENV === "development" && typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("heroAnimation") : null);
-  const selected = animation ?? (previewClip && names.includes(previewClip) ? previewClip : "WALK_player_Root");
+  const selected = animation ?? (previewClip && names.includes(previewClip) ? previewClip : "FIGHTIDLE_Root");
   const debugTime = useRef(0);
 
   // Runs after the animation mixer. World grounding is outside the untouched animated rig.
   useFrame(({ gl }, delta) => {
     if (!group.current || !probes.length) return;
     mixer.update(delta);
-    group.current.updateMatrixWorld(true);
+    group.current.updateWorldMatrix(true, true);
     const skeletons = new Set(probes.map(p => p.mesh.skeleton));
     skeletons.forEach(skeleton => skeleton.update());
     const measurement = measureSoles(probes, terrain);
     const correction = measurement.correction;
     group.current.position.y += correction > 0 ? correction : correction * (1 - Math.exp(-delta * 18));
-    group.current.updateMatrixWorld(true);
+    group.current.updateWorldMatrix(true, true);
     skeletons.forEach(skeleton => skeleton.update());
     if (process.env.NODE_ENV === "development") {
       debugTime.current += delta;
@@ -80,6 +80,7 @@ export default function Hero({
       return;
     }
     const walk = mixer.clipAction(clip, model);
+    const previous = activeAction.current;
     activeAction.current = walk;
 
     console.log("[ASCEND] Using hero animation:", selected);
@@ -89,14 +90,10 @@ export default function Hero({
       .setLoop(THREE.LoopRepeat, Infinity)
       .fadeIn(0.35)
       .play();
-
-    return () => {
-      walk.fadeOut(0.25);
-      walk.stop();
-      mixer.uncacheAction(clip, model);
-      activeAction.current = null;
-    };
+    if (previous && previous !== walk) walk.crossFadeFrom(previous, .35, false);
   }, [animations, mixer, model, selected]);
+
+  useEffect(() => () => { mixer.stopAllAction(); mixer.uncacheRoot(model); }, [mixer, model]);
 
   // Enable shadows on all meshes
   useEffect(() => {

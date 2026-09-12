@@ -9,24 +9,17 @@ import Terrain from "./Terrain";
 import { useReducedMotion } from "./useReducedMotion";
 import { useGraphicsQuality } from "./GraphicsQuality";
 import TidalWater from "./TidalWater";
-
-export type EnvironmentRegion =
-  | "forgotten_shore"
-  | "forest_of_resolve"
-  | "mountains_of_trial"
-  | "temple_of_knowledge"
-  | "realm_of_ascension"
-  | "summit";
+import type { RegionSlug } from "@/types/game";
 
 interface EnvironmentProps {
-  region?: EnvironmentRegion;
+  region?: RegionSlug;
 }
 
-export default function Environment({ region = "forgotten_shore" }: EnvironmentProps) {
+export default function Environment({ region = "forgotten-shore" }: EnvironmentProps) {
   const reducedMotion = useReducedMotion();
   const { config } = useGraphicsQuality();
 
-  if (region !== "forgotten_shore") {
+  if (region !== "forgotten-shore") {
     return null;
   }
 

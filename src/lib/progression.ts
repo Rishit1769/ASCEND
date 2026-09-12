@@ -1,16 +1,11 @@
 import { type Region, type RegionSlug } from "@/types/game";
+import { WORLD_REGIONS, normalizeLevel } from "./world";
 
-export const REGIONS: Region[] = [
-  { slug: "forgotten-shore", name: "The Forgotten Shore", levelRange: [1, 4] },
-  { slug: "forest-of-resolve", name: "Forest of Resolve", levelRange: [5, 9] },
-  { slug: "mountains-of-trial", name: "Mountains of Trial", levelRange: [10, 14] },
-  { slug: "temple-of-knowledge", name: "Temple of Knowledge", levelRange: [15, 19] },
-  { slug: "summit", name: "Realm of Ascension", levelRange: [20, Infinity] },
-];
+export const REGIONS: Region[] = WORLD_REGIONS.map(region => ({ slug: region.id, name: region.name, levelRange: [region.levelStart, region.levelEnd] }));
 
 export function getRegionForLevel(level: number): Region {
   return REGIONS.find(
-    (r) => level >= r.levelRange[0] && level <= r.levelRange[1]
+    (r) => normalizeLevel(level) >= r.levelRange[0] && normalizeLevel(level) <= r.levelRange[1]
   ) ?? REGIONS[0];
 }
 

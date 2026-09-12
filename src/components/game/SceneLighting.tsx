@@ -3,10 +3,11 @@ import { useMemo } from "react";
 import { Object3D } from "three";
 import { useGraphicsQuality } from "./GraphicsQuality";
 import { SUN_DIRECTION } from "./skyConfig";
+import { useWorldProgress } from "./WorldProgress";
+import { resolveWorld } from "@/lib/world";
 
 const AMBIENT_INTENSITY = 0.8;
 const AMBIENT_COLOR = "#a6c5dc";
-const KEY_LIGHT_INTENSITY = 2.8;
 const KEY_LIGHT_POSITION: [number, number, number] = [SUN_DIRECTION.x * 40, SUN_DIRECTION.y * 40, -12 + SUN_DIRECTION.z * 40];
 const KEY_LIGHT_COLOR = "#ffe9c8";
 const FILL_LIGHT_INTENSITY = 0.72;
@@ -18,6 +19,8 @@ const RIM_LIGHT_COLOR = "#8AA7C7";
 
 export default function SceneLighting() {
   const { config, preset } = useGraphicsQuality();
+  const { level } = useWorldProgress();
+  const intensity = resolveWorld(level).region.atmosphere.sunIntensity;
   const target = useMemo(() => { const o = new Object3D(); o.position.set(0, 0, -12); return o; }, []);
 
   return (
@@ -29,7 +32,7 @@ export default function SceneLighting() {
         <directionalLight
           key={preset}
           position={KEY_LIGHT_POSITION}
-          intensity={KEY_LIGHT_INTENSITY}
+          intensity={intensity}
           color={KEY_LIGHT_COLOR}
           target={target}
           castShadow
@@ -48,7 +51,7 @@ export default function SceneLighting() {
       {!config.shadowsEnabled && (
         <directionalLight
           position={KEY_LIGHT_POSITION}
-          intensity={KEY_LIGHT_INTENSITY * 0.9}
+          intensity={intensity * 0.9}
           color={KEY_LIGHT_COLOR}
           target={target}
         />
