@@ -24,7 +24,7 @@ export default function RealmCameraGuard() {
     if (hit && hit.distance < distance + .65) {
       if (process.env.NODE_ENV === "development" && !scratch.logged) {
         scratch.logged = true;
-        console.info("[RealmCamGuard] push", { dist: +hit.distance.toFixed(2), point: hit.point.toArray().map(n => +n.toFixed(2)), type: hit.object.type, instanced: (hit.object as unknown as { isInstancedMesh?: boolean }).isInstancedMesh, instanceId: hit.instanceId, geo: hit.object.geometry?.type, uuid: hit.object.uuid, target: orbit.target.toArray().map(n => +n.toFixed(2)), camera: camera.position.toArray().map(n => +n.toFixed(2)) });
+        console.info("[RealmCamGuard] push " + JSON.stringify({ dist: +hit.distance.toFixed(2), point: hit.point.toArray().map(n => +n.toFixed(2)), type: hit.object.type, ctor: hit.object.constructor?.name, instanced: !!(hit.object as unknown as { isInstancedMesh?: boolean }).isInstancedMesh, instanceId: hit.instanceId ?? null, geo: hit.object.geometry?.type ?? null, uuid: hit.object.uuid, userData: hit.object.userData }));
       }
       camera.position.copy(orbit.target).addScaledVector(scratch.direction, Math.max(.8, hit.distance - .65));
     }
