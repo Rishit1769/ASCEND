@@ -24,7 +24,7 @@ function WorldPreviewPanel({ actualLevel }: { actualLevel: number }) {
   const { level, preview, previewLevel, setPreviewLevel, exitPreview, reloadRegion, previewAnimation, setPreviewAnimation } = useWorldProgress();
   const [open, setOpen] = useState(false);
   const { region, checkpoint } = resolveWorld(level);
-  return <div className="pointer-events-auto absolute right-3 bottom-3 z-50 w-[min(330px,calc(100vw-24px))] text-xs text-white">
+  return <div className="pointer-events-auto absolute right-3 bottom-20 z-50 w-[min(330px,calc(100vw-24px))] text-xs text-white sm:bottom-3">
     <button className="rounded border border-amber-200/40 bg-black/85 px-3 py-2 font-semibold uppercase tracking-wider" onClick={() => setOpen(value => !value)} aria-expanded={open}>PREVIEW WORLD</button>
     {preview && <span className="ml-2 rounded bg-amber-200 px-2 py-1 text-[10px] font-bold text-black">DEV WORLD PREVIEW</span>}
     {open && <section className="mt-2 max-h-[72vh] overflow-auto rounded border border-white/20 bg-black/90 p-3 shadow-2xl" aria-label="World preview panel">
@@ -40,7 +40,7 @@ function WorldPreviewPanel({ actualLevel }: { actualLevel: number }) {
       <label className="mb-3 block text-white/60">Animation<select className="mt-1 w-full bg-zinc-900 p-2 text-white" aria-label="Preview animation" value={previewAnimation} onChange={event => setPreviewAnimation(event.target.value)}><option>FIGHTIDLE_Root</option><option>WALK_player_Root</option></select></label>
       <label className="mb-3 block text-white/60">Graphics preset<select className="mt-1 w-full bg-zinc-900 p-2 text-white" aria-label="Preview graphics preset" defaultValue="auto" onChange={event => window.dispatchEvent(new CustomEvent("ascend-preview-preset", { detail: event.target.value }))}><option value="auto">AUTO</option><option value="ultra">ULTRA</option><option value="high">HIGH</option><option value="medium">MEDIUM</option><option value="low">LOW</option><option value="potato">POTATO</option></select></label>
       <div className="grid grid-cols-2 gap-2"><button className="border border-white/20 px-2 py-2" onClick={reloadRegion}>Reload region</button><button className="border border-white/20 px-2 py-2" onClick={() => { setOpen(false); window.dispatchEvent(new Event("ascend-reset-camera")); }}>Reset camera</button></div>
-      <p className="mt-3 border-t border-white/15 pt-2 text-[10px] text-white/55">Status: READY for Shore · PLACEHOLDER for later regions<br />Actual player level: {actualLevel}</p>
+      <p className="mt-3 border-t border-white/15 pt-2 text-[10px] text-white/55">Status: {region.status === "available" ? "READY" : "PLACEHOLDER"}<br />Actual player level: {actualLevel}</p>
       {preview && <button className="mt-2 w-full bg-amber-200 px-2 py-2 font-semibold text-black" onClick={() => { exitPreview(); setOpen(false); }}>Exit preview</button>}
       {previewLevel === null && <p className="mt-2 text-[10px] text-white/50">Select a region or checkpoint to enable preview.</p>}
     </section>}

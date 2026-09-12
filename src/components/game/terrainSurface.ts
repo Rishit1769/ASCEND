@@ -1,16 +1,17 @@
-import { useMemo } from "react";
+import { createContext, createElement, useContext, useMemo, type ReactNode } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { createGroundSampler, normalizeAsset } from "./grounding";
 export { normalizeAsset } from "./grounding";
 
 const surfaces = new WeakMap<THREE.Object3D, ReturnType<typeof createGroundSampler>>();
+export const TerrainSurfaceContext = createContext<ReturnType<typeof createGroundSampler> | null>(null);
 
 // Match the two rendered scans exactly; placements follow their actual surface, not a flat Y.
-export function useTerrainSurface() {
+export function CoastalTerrainProvider({ children }: { children: ReactNode }) {
   const near = useGLTF("/environment/coast_rocks_01.glb");
   const far = useGLTF("/environment/coast_rocks_01-lod.glb");
-  return useMemo(() => {
+  const sample = useMemo(() => {
     const cached = surfaces.get(near.scene);
     if (cached) return cached;
     const a = normalizeAsset(near.scene, 35, undefined, true);
@@ -24,6 +25,13 @@ export function useTerrainSurface() {
     surfaces.set(near.scene, sample);
     return sample;
   }, [near.scene, far.scene]);
+  return createElement(TerrainSurfaceContext.Provider, { value: sample }, children);
+}
+
+export function useTerrainSurface() {
+  const sample = useContext(TerrainSurfaceContext);
+  if (!sample) throw new Error("TerrainSurfaceProvider must wrap the environment and hero");
+  return sample;
 }
 
 export function useGroundHeight() {

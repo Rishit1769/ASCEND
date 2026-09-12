@@ -10,6 +10,7 @@ import { useReducedMotion } from "./useReducedMotion";
 import { useGraphicsQuality } from "./GraphicsQuality";
 import TidalWater from "./TidalWater";
 import type { RegionSlug } from "@/types/game";
+import ForestOfResolve from "./ForestOfResolve";
 
 interface EnvironmentProps {
   region?: RegionSlug;
@@ -19,6 +20,7 @@ export default function Environment({ region = "forgotten-shore" }: EnvironmentP
   const reducedMotion = useReducedMotion();
   const { config } = useGraphicsQuality();
 
+  if (region === "forest-of-resolve") return <ForestOfResolve />;
   if (region !== "forgotten-shore") {
     return null;
   }

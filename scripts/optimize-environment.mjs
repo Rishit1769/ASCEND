@@ -7,7 +7,7 @@ import { readFile, writeFile } from "node:fs/promises";
 
 await Promise.all([MeshoptEncoder.ready, MeshoptSimplifier.ready]);
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ "meshopt.encoder": MeshoptEncoder });
-const targets = { coastal_cliff_02: 70000, coast_rocks_01: 45000, modular_fort_01: 100000, fern_02: 6000, tree_small_02: 18000, rock_moss_set_01: 18000, wooden_lantern_01: 6000 };
+const targets = { coastal_cliff_02: 70000, coast_rocks_01: 45000, modular_fort_01: 100000, fern_02: 6000, tree_small_02: 18000, rock_moss_set_01: 18000, wooden_lantern_01: 6000, pine_roots: 12000, dead_tree_trunk: 10000 };
 const report = JSON.parse(await readFile("public/environment/manifest.json", "utf8").catch(() => "{}"));
 function triangles(doc) {
   return doc.getRoot().listMeshes().reduce((sum, mesh) => sum + mesh.listPrimitives().reduce((n, p) => n + (p.getIndices()?.getCount() ?? p.getAttribute("POSITION").getCount()) / 3, 0), 0);

@@ -1,0 +1,25 @@
+{
+  "license": "CC0-1.0",
+  "author": "Poly Haven",
+  "asset": "https://polyhaven.com/a/forest_leaves_02",
+  "sources": [
+    {
+      "file": "forest-floor-Diffuse.jpg",
+      "size": 437891,
+      "md5": "13e9bfac07cb72ca143e153cc2f589a8",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_diffuse_1k.jpg"
+    },
+    {
+      "file": "forest-floor-nor_gl.jpg",
+      "size": 577163,
+      "md5": "72002432222467c74cd9980cbddb25a4",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_nor_gl_1k.jpg"
+    },
+    {
+      "file": "forest-floor-Rough.jpg",
+      "size": 192523,
+      "md5": "578e637510d8fdd7acf97afc6f329e9d",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/forest_leaves_02_rough_1k.jpg"
+    }
+  ]
+}

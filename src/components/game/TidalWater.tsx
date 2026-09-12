@@ -9,6 +9,7 @@ import { useTerrainSurface } from "./terrainSurface";
 import { useGraphicsQuality } from "./GraphicsQuality";
 import { useReducedMotion } from "./useReducedMotion";
 import { SUN_DIRECTION } from "./skyConfig";
+import { FOREST_REFLECTION } from "./ForestOfResolve/forestConfig";
 
 function reflectionUpdater(reflector: Reflector, enabled: boolean, cadenceMs: number): THREE.Object3D["onBeforeRender"] {
   const renderReflection = reflector.onBeforeRender;
@@ -30,9 +31,10 @@ function reflectionUpdater(reflector: Reflector, enabled: boolean, cadenceMs: nu
   };
 }
 
-export default function TidalWater() {
+export default function TidalWater({ forest = false }: { forest?: boolean }) {
   const sample = useTerrainSurface();
-  const { config } = useGraphicsQuality();
+  const { config: graphics, preset } = useGraphicsQuality();
+  const config = forest ? { ...graphics, waterReflectionEnabled: FOREST_REFLECTION[preset].enabled, waterResolution: FOREST_REFLECTION[preset].resolution, waterReflectionCadence: FOREST_REFLECTION[preset].cadence } : graphics;
   const reduced = useReducedMotion();
   const normals = useTexture("/environment/waternormals.jpg");
   const bathymetry = useMemo(() => {
@@ -66,9 +68,9 @@ export default function TidalWater() {
         vertexShader: "void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
         fragmentShader: "void main(){gl_FragColor=vec4(.18,.35,.37,.72);}",
       }));
-    reflector.name = "shallow-coastal-water";
+    reflector.name = forest ? "forest-stream" : "shallow-coastal-water";
     reflector.rotation.x = -Math.PI / 2;
-    reflector.position.set(0, SEA_LEVEL, -25);
+    reflector.position.set(0, forest ? -.48 : SEA_LEVEL, -25);
     const material = reflector.material as THREE.ShaderMaterial;
     const reflectionSample = config.waterReflectionEnabled ? `
         vec2 uv=projected.xy/projected.w+n.xz*(.011+.012*refractionStrength);
@@ -96,10 +98,10 @@ export default function TidalWater() {
     material.fog = true;
     Object.assign(material.uniforms, THREE.UniformsUtils.clone(THREE.UniformsLib.fog), {
       normalMap: { value: normal }, depthMap: { value: bathymetry }, time: { value: 0 }, sun: { value: SUN_DIRECTION },
-      shallow: { value: new THREE.Color("#496c68") }, deep: { value: new THREE.Color("#162b2f") },
-      mid: { value: new THREE.Color("#315d61") }, skyTint: { value: new THREE.Color("#9db7c1") },
-      texel: { value: 1 / resolution },
-      waveStrength: { value: config.waterWaveStrength },
+      shallow: { value: new THREE.Color(forest ? "#587365" : "#496c68") }, deep: { value: new THREE.Color(forest ? "#182e29" : "#162b2f") },
+      mid: { value: new THREE.Color(forest ? "#314e43" : "#315d61") }, skyTint: { value: new THREE.Color(forest ? "#72887e" : "#9db7c1") },
+      texel: { value: 1 / Math.max(1, resolution) },
+      waveStrength: { value: config.waterWaveStrength * (forest ? .18 : 1) },
       normalStrength: { value: config.waterNormalStrength },
       reflectionStrength: { value: config.waterReflectionEnabled ? 1 : 0 },
       refractionStrength: { value: config.waterRefractionStrength },
@@ -116,14 +118,13 @@ export default function TidalWater() {
       void main(){
         vec3 displaced=position;
         vec2 p=(modelMatrix*vec4(position,1.)).xz;
-        float w1=wave(vec2(.78,.25),22.,.36,.115,p);
+        float w1=${config.waterWaveLayers > 0 ? "wave(vec2(.78,.25),22.,.36,.115,p)" : "0."};
         float w2=${config.waterWaveLayers >= 2 ? "wave(vec2(-.35,.94),12.,.58,.065,p)" : "0."};
         float w3=${config.waterWaveLayers >= 3 ? "wave(vec2(.28,-.96),7.2,.82,.032,p)" : "0."};
         float w4=${config.waterWaveLayers >= 4 ? "wave(vec2(-.88,-.48),3.4,1.34,.014,p)" : "0."};
         float w5=${config.waterWaveLayers >= 5 ? "wave(vec2(.92,-.18),2.2,1.7,.009,p)" : "0."};
         float longSwell=w1+w2+w3+w4+w5;
-        displaced.z += ${config.waterWaveLayers > 0 ? "(cos(dot(normalize(vec2(.78,.25)),p)*.285+time*.36)*.045 + cos(dot(normalize(vec2(-.35,.94)),p)*.52+time*.58)*.022) * waveStrength" : "0."};
-        displaced.y += longSwell * waveStrength;
+        displaced.z += longSwell * waveStrength;
         waveCrest=smoothstep(.055,.17,longSwell*waveStrength);
         vec4 world= modelMatrix*vec4(displaced,1.);
         projected=textureMatrix*vec4(displaced,1.);
@@ -150,6 +151,8 @@ export default function TidalWater() {
         float fresnel=.02+.98*pow(1.-max(dot(view,n),0.),5.);
         ${reflectionSample}
         float floorY=${SEABED_Y.toFixed(2)}+texture2D(depthMap,(worldPoint.xz-vec2(-45.,-65.))/90.).r*8.;
+        if(floorY>worldPoint.y+.025)discard;
+        ${forest ? "if(abs(worldPoint.x)>43. || worldPoint.z < -63. || worldPoint.z > 23.)discard;" : ""}
         float depth=max(0.,worldPoint.y-floorY);
         float absorption=1.-exp(-depth*1.22);
         vec3 depthColor=mix(shallow,mid,smoothstep(.0,.42,absorption));
@@ -169,10 +172,12 @@ export default function TidalWater() {
     material.needsUpdate = true;
     if (config.waterReflectionEnabled) reflector.onBeforeRender = reflectionUpdater(reflector as Reflector, true, config.waterReflectionCadence);
     return reflector;
-  }, [config.waterResolution, config.waterGeometrySegments, config.waterWaveStrength, config.waterNormalStrength, config.waterReflectionEnabled, config.waterReflectionCadence, config.waterRefractionStrength, config.waterWaveLayers, config.waterNormalLayers, config.waterFoamEnabled, normals, bathymetry]);
+  }, [forest, config.waterResolution, config.waterGeometrySegments, config.waterWaveStrength, config.waterNormalStrength, config.waterReflectionEnabled, config.waterReflectionCadence, config.waterRefractionStrength, config.waterWaveLayers, config.waterNormalLayers, config.waterFoamEnabled, normals, bathymetry]);
   useEffect(() => () => {
     (water.material as THREE.ShaderMaterial).uniforms.normalMap.value.dispose();
-    water.dispose(); water.geometry.dispose();
+    if (water instanceof Reflector) water.dispose();
+    else water.material.dispose();
+    water.geometry.dispose();
   }, [water]);
   useFrame(({ gl }, delta) => {
     applyProps(water.userData, { frame: (water.userData.frame ?? 0) + 1 });

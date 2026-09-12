@@ -3,7 +3,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 
-const assets = ["coastal_cliff_02", "coast_rocks_01", "modular_fort_01", "fern_02", "tree_small_02", "rock_moss_set_01", "wooden_lantern_01"].filter(id => !process.argv[2] || process.argv.slice(2).includes(id));
+const assets = ["coastal_cliff_02", "coast_rocks_01", "modular_fort_01", "fern_02", "tree_small_02", "rock_moss_set_01", "wooden_lantern_01", "pine_roots", "dead_tree_trunk"].filter(id => !process.argv[2] || process.argv.slice(2).includes(id));
 const root = new URL("../.asset-cache/environment/", import.meta.url);
 for (const id of assets) {
   const response = await fetch("https://api.polyhaven.com/files/" + id);

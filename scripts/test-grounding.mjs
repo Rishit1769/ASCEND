@@ -7,6 +7,7 @@ import { MeshoptDecoder } from "meshoptimizer";
 import { createGroundSampler, normalizeAsset, snapToTerrain, surfaceAlignment, findDryGround, SEA_LEVEL } from "../src/components/game/grounding.ts";
 import { WORLD_REGIONS, WORLD_CHECKPOINTS, resolveWorld } from "../src/lib/world.ts";
 import { findSoleProbes, measureSoles, SOLE_OFFSET } from "../src/components/game/heroGrounding.ts";
+import { createForestGeometry, FOREST, FOREST_QUALITY } from "../src/components/game/ForestOfResolve/forestConfig.ts";
 
 // Keep real geometry, skins and clips, but omit images for a headless geometry-only test.
 async function loadGeometry(path) {
@@ -41,6 +42,23 @@ for (const region of WORLD_REGIONS) {
   if (Number.isFinite(region.levelEnd)) assert.equal(resolveWorld(region.levelEnd).region.id, region.id);
 }
 assert.equal(resolveWorld(100).region.id, "summit");
+const forestGround = new THREE.Mesh(createForestGeometry());
+const fort = await loadGeometry("../public/environment/modular_fort_01-lod.glb");
+const forestBridge = normalizeAsset(fort.scene.getObjectByName("modular_fort_01_wall_walkway_straight_01"), 3.4);
+forestBridge.scale.y *= .15; forestBridge.scale.z *= .65; forestBridge.position.set(0, -1, -18);
+const forestSample = createGroundSampler([forestGround, forestBridge]);
+for (const checkpoint of WORLD_REGIONS[1].checkpoints) {
+  const [x,,z] = checkpoint.worldPosition;
+  assert(forestSample(x,z).point.y > FOREST.waterLevel, `${checkpoint.name}: underwater`);
+  assert(forestSample(x,z).normal.y > .98, `${checkpoint.name}: uneven hero footing`);
+}
+for (let z = 8; z >= -34; z -= .1) {
+  const x = Math.sin(z * .19) * 1.65;
+  assert(forestSample(x,z).point.y > FOREST.waterLevel + .05, `Forest route submerged at ${x},${z}`);
+}
+assert.equal(FOREST_QUALITY.low.leaves, 0);
+assert.equal(FOREST_QUALITY.potato.leaves, 0);
+console.log("Forest checkpoints, bridge crossing, and lightweight presets passed.");
 for (const checkpoint of WORLD_REGIONS[0].checkpoints) {
   const [x,,z] = checkpoint.worldPosition;
   const hit = findDryGround(sample, x, z);
@@ -105,13 +123,16 @@ for (const clip of hero.animations) {
   assert(minClearance >= SOLE_OFFSET - .001, `${clip.name}: sole penetration ${minClearance}`);
   assert(fullBootClearance >= -.005, `${clip.name}: an unprobed boot vertex penetrates ${fullBootClearance}`);
   console.log(JSON.stringify({ clip: clip.name, frames, probes: probes.length, allBootVertices: allBootVertices.length, oldMinClearance, minClearance, fullBootClearance, finalRootY: groundedY }));
-  for (const point of WORLD_REGIONS[0].checkpoints) {
+  for (const { point, ground } of [
+    ...WORLD_REGIONS[0].checkpoints.map(point => ({ point, ground: sample })),
+    ...WORLD_REGIONS[1].checkpoints.map(point => ({ point, ground: forestSample })),
+  ]) {
     world.position.set(point.worldPosition[0], 0, point.worldPosition[2]);
     for (let frame = 0; frame < 120; frame++) {
       mixer.update(1 / 60); update();
-      const contact = measureSoles(probes, sample);
+      const contact = measureSoles(probes, ground);
       world.position.y += contact.correction; update();
-      assert(Math.min(...measureSoles(probes, sample).contacts.map(p => p.clearance)) >= SOLE_OFFSET - .001, `${clip.name}: penetration at ${point.name}`);
+      assert(Math.min(...measureSoles(probes, ground).contacts.map(p => p.clearance)) >= SOLE_OFFSET - .001, `${clip.name}: penetration at ${point.name}`);
     }
   }
   mixer.stopAllAction(); mixer.uncacheRoot(model);

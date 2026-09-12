@@ -44,6 +44,7 @@ export default function ProgressionHero() {
     const curve = new CatmullRomCurve3(points, false, "centripetal");
     if (first || preview || reducedMotion || previous >= level) {
       root.current.position.copy(destination);
+      initialized.current = false;
       travel.current = null;
     } else travel.current = { curve, elapsed: 0, duration: Math.max(1, curve.getLength() / 1.6) };
     prior.current = level;
@@ -73,7 +74,7 @@ export default function ProgressionHero() {
       if (t === 1) { travel.current = null; setWalking(false); }
     } else if (walking) setWalking(false);
     if (!movement) hero.rotation.y += (0 - hero.rotation.y) * (1 - Math.exp(-delta * 5));
-    const target = hero.position.clone().add(new Vector3(0, 1, 0));
+    const target = hero.position.clone().add(new Vector3(0, region.id === "forest-of-resolve" ? 1.8 : 1, 0));
     if (controls) {
       if (!initialized.current) {
         camera.position.copy(hero.position).add(new Vector3(...checkpoint.cameraOffset));

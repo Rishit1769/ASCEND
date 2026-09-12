@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Component, type ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Detailed, useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
@@ -9,6 +9,8 @@ import { findDryGround, snapToTerrain, surfaceAlignment } from "./grounding";
 import { useReducedMotion } from "./useReducedMotion";
 import { useGraphicsQuality } from "./GraphicsQuality";
 import { TERRAIN_DETAIL_GLSL, TERRAIN_COLOR_GLSL, TERRAIN_NORMAL_GLSL } from "./terrainDetail";
+import { ForestWindContext } from "./ForestOfResolve/ForestWind";
+import { FOREST } from "./ForestOfResolve/forestConfig";
 
 type Placement = { position: [number, number, number]; scale?: number; rotation?: number; normal?: THREE.Vector3 };
 interface AssetProps {
@@ -34,7 +36,8 @@ function useArtMaterial(id: string, tint = "#ffffff") {
   const gl = useThree(state => state.gl);
   const reduced = useReducedMotion();
   const wind = useRef({ value: 0 });
-  useFrame((_, delta) => { if (!reduced) wind.current.value += Math.min(delta, .05); });
+  const forestWind = useContext(ForestWindContext);
+  useFrame((_, delta) => { if (!reduced && !forestWind) wind.current.value += Math.min(delta, .05); });
   return useMemo(() => (source: THREE.Material) => {
     const material = source.clone();
     if (!(material instanceof THREE.MeshStandardMaterial)) return material;
@@ -61,13 +64,23 @@ function useArtMaterial(id: string, tint = "#ffffff") {
       material.depthWrite = true;
       material.roughness = .9;
       material.onBeforeCompile = shader => {
-        shader.uniforms.shoreWind = wind.current;
+        shader.uniforms.shoreWind = forestWind ?? wind.current;
         shader.vertexShader = shader.vertexShader.replace("#include <common>", "#include <common>\nuniform float shoreWind;")
           .replace("#include <begin_vertex>", `#include <begin_vertex>
-            transformed.x += sin(shoreWind*.7 + position.y*5. + position.z*4.) * .0025 * smoothstep(-.8,.7,position.y);`);
+            ${forestWind ? `
+            vec4 windAnchor=vec4(0.,0.,0.,1.);
+            #ifdef USE_INSTANCING
+              windAnchor=instanceMatrix*windAnchor;
+            #endif
+            float phase=dot((modelMatrix*windAnchor).xz,vec2(.37,.61));
+            float gust=sin(shoreWind*${FOREST.wind.speed}+phase)*.65+sin(shoreWind*.23+phase*.7)*.35;
+            float bend=smoothstep(-.5,1.4,position.y);
+            transformed.x += (gust*${FOREST.wind.strength}+sin(shoreWind*2.4+position.x*17.+phase)*${FOREST.wind.flutter})*bend;
+            transformed.z += sin(shoreWind*.41+phase+position.y)*.006*bend;
+            ` : "transformed.x += sin(shoreWind*.7 + position.y*5. + position.z*4.) * .0025 * smoothstep(-.8,.7,position.y);"}`);
         shader.fragmentShader = shader.fragmentShader.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\nreflectedLight.indirectDiffuse *= gl_FrontFacing ? 1.0 : 1.18;");
       };
-      material.customProgramCacheKey = () => "shore-foliage-v1";
+      material.customProgramCacheKey = () => forestWind ? "forest-foliage-v2" : "shore-foliage-v1";
     }
     const stone = /cliff|rocks|rock_moss|fort/.test(id);
     if (stone) {
@@ -114,20 +127,25 @@ function useArtMaterial(id: string, tint = "#ffffff") {
       material.customProgramCacheKey = () => "shore-terrain-v4-" + id + preset;
     }
     return material;
-  }, [gl, id, tint, preset]);
+  }, [gl, id, tint, preset, forestWind]);
 }
 
 /* ─── Error boundary — silences missing-GLB crashes ────────────── */
-interface EBState { hasError: boolean }
-class AssetErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, EBState> {
-  state: EBState = { hasError: false };
-  static getDerivedStateFromError(): EBState { return { hasError: true }; }
+interface EBState { hasError: boolean; error: Error | null }
+class AssetErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode; strict?: boolean }, EBState> {
+  state: EBState = { hasError: false, error: null };
+  static getDerivedStateFromError(error: Error): EBState { return { hasError: true, error }; }
   componentDidCatch(err: Error) {
     console.warn("[ASCEND] Environment asset skipped:", err.message);
   }
   render() {
+    if (this.props.strict && this.state.error) throw this.state.error;
     return this.state.hasError ? this.props.fallback : this.props.children;
   }
+}
+function AssetBoundary({ children }: { children: ReactNode }) {
+  const forest = useContext(ForestWindContext);
+  return <AssetErrorBoundary strict={!!forest} fallback={null}>{children}</AssetErrorBoundary>;
 }
 
 /* ─── Inner: loads a single GLB via useGLTF ────────────────────── */
@@ -219,11 +237,11 @@ function MeshInstances({ mesh, placements, id, castShadow, tint }: { mesh: THREE
 
 export function EnvironmentAsset(props: AssetProps) {
   return (
-    <AssetErrorBoundary fallback={null}>
+    <AssetBoundary>
       <group position={props.position} rotation={[0, props.rotation ?? 0, 0]}>
         <AssetRoot {...props} />
       </group>
-    </AssetErrorBoundary>
+    </AssetBoundary>
   );
 }
 
@@ -242,26 +260,26 @@ function GroundedRoot({ position, rotation, burial = .035, offset = 0, normalAli
 }
 
 export function GroundedAsset(props: AssetProps) {
-  return <AssetErrorBoundary fallback={null}><GroundedRoot {...props} /></AssetErrorBoundary>;
+  return <AssetBoundary><GroundedRoot {...props} /></AssetBoundary>;
 }
 
 export function AssetLOD(props: AssetProps) {
   return (
-    <AssetErrorBoundary fallback={null}>
+    <AssetBoundary>
       <Detailed distances={[0, 28]} hysteresis={0.12} position={props.position} rotation={[0, props.rotation ?? 0, 0]}>
         <AssetRoot {...props} position={[0, 0, 0]} rotation={0} />
         <AssetRoot {...props} position={[0, 0, 0]} rotation={0} low />
       </Detailed>
-    </AssetErrorBoundary>
+    </AssetBoundary>
   );
 }
 
 export function AssetScatter({ placements, ...props }: AssetProps & { placements: Placement[] }) {
   return (
-    <AssetErrorBoundary fallback={null}>
+    <AssetBoundary>
       <group>
         <ScatterRoot {...props} placements={placements} />
       </group>
-    </AssetErrorBoundary>
+    </AssetBoundary>
   );
 }

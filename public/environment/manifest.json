@@ -433,5 +433,119 @@
         "mimeType": "image/webp"
       }
     ]
+  },
+  "pine_roots": {
+    "source": "https://polyhaven.com/a/pine_roots",
+    "license": "CC0-1.0",
+    "sourceTriangles": 162693,
+    "highTriangles": 11976,
+    "lowTriangles": 2992,
+    "bounds": {
+      "min": [
+        -0.824921727180481,
+        -0.03199338912963867,
+        -1.3424444794654846
+      ],
+      "max": [
+        0.946092963218689,
+        0.12181344628334045,
+        0.5503213405609131
+      ]
+    },
+    "maps": [
+      {
+        "name": "pine_roots_a_nor_gl",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "pine_roots_a_diff",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "pine_roots_a_rough",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "pine_roots_b_nor_gl",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "pine_roots_b_diff",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "pine_roots_b_rough",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
+  },
+  "dead_tree_trunk": {
+    "source": "https://polyhaven.com/a/dead_tree_trunk",
+    "license": "CC0-1.0",
+    "sourceTriangles": 101802,
+    "highTriangles": 9990,
+    "lowTriangles": 2496,
+    "bounds": {
+      "min": [
+        -1.5391005277633667,
+        -0.027082093060016632,
+        -0.17080287635326385
+      ],
+      "max": [
+        1.5119144916534424,
+        0.2626980245113373,
+        0.10672463476657867
+      ]
+    },
+    "maps": [
+      {
+        "name": "dead_tree_trunk_nor_gl",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "dead_tree_trunk_diff",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      },
+      {
+        "name": "dead_tree_trunk_rough",
+        "size": [
+          2048,
+          2048
+        ],
+        "mimeType": "image/webp"
+      }
+    ]
   }
 }
