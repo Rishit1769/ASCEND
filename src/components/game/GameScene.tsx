@@ -16,7 +16,6 @@ import { GraphicsProvider, useGraphicsQuality } from "./GraphicsQuality";
 import GraphicsSettings from "./GraphicsSettings";
 import SceneEffects from "./SceneEffects";
 import RealisticSky from "./RealisticSky";
-import RegionTitleOverlay from "./RegionTitleOverlay";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 const CAMERA_POSITION: [number, number, number] = [0, 1.7, 7.2];
@@ -67,20 +66,25 @@ function WireframeFallback() {
 }
 
 function SceneContent() {
-  const { level } = useWorldProgress();
+  const { level, reloadCounter } = useWorldProgress();
   const { region } = resolveWorld(level);
-  if (region.status !== "available") return null;
+  useEffect(() => {
+    console.info("[World] Resolved region:", region.id);
+    console.info("[RegionManager] Loading:", region.id);
+    console.info("[RegionManager] Ready:", region.id, region.status === "available" ? "essential" : "placeholder");
+  }, [region.id, region.status]);
   return (
-    <>
+    <group key={`${region.id}-${reloadCounter}`} name={`region-manager-${region.id}`}>
+      {region.status !== "available" && <group name="development-placeholder-region"><mesh position={[0, -1, -5]}><cylinderGeometry args={[3.5, 6, 2.5, 8]} /><meshStandardMaterial color="#4f5b5e" roughness={.88} /></mesh><mesh position={[0, .7, -5]}><torusGeometry args={[1.2, .16, 8, 20]} /><meshStandardMaterial color="#c2a464" metalness={.5} roughness={.4} /></mesh></group>}
       <ErrorBoundary fallback={<Html center position={[0, 3, 0]}>Environment could not load. Reload to retry.</Html>}>
         <Suspense fallback={<Html center position={[0, 3, 0]}><span style={{ color: "#c2c9cd", fontSize: 12, whiteSpace: "nowrap" }}>Preparing The Forgotten Shore...</span></Html>}>
-          <Environment region={region.id} />
+          {region.status === "available" && <Environment region={region.id} />}
         </Suspense>
       </ErrorBoundary>
       <ErrorBoundary fallback={<WireframeFallback />}>
         <Suspense fallback={null}><ProgressionHero /></Suspense>
       </ErrorBoundary>
-    </>
+    </group>
   );
 }
 
@@ -150,8 +154,7 @@ function Scene() {
         <SceneContent />
         <SceneEffects />
       </Canvas>
-      <RegionTitleOverlay />
-
+      {process.env.NODE_ENV === "development" && <div className="pointer-events-none absolute left-3 top-28 z-30 rounded border border-white/20 bg-black/75 px-2 py-1 text-[10px] text-white/75">REGION: {region.name} · {region.status === "available" ? "READY" : "PLACEHOLDER REGION"}</div>}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-16"
         style={{ background: "linear-gradient(#080c14b3, transparent)" }}

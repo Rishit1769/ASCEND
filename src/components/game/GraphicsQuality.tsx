@@ -42,6 +42,14 @@ export interface GraphicsConfig {
   waterNormalStrength: number;
   /** Relative strength of water refraction distortion */
   waterRefractionStrength: number;
+  /** Enables the detailed water path; LOW and POTATO keep this disabled. */
+  waterDetailEnabled: boolean;
+  /** Number of directional wave layers in the water vertex shader. */
+  waterWaveLayers: number;
+  /** Number of animated normal layers in the water fragment shader. */
+  waterNormalLayers: number;
+  /** Enable shoreline and crest foam. */
+  waterFoamEnabled: boolean;
   /** Sky lighting environment map resolution */
   skyEnvResolution: number;
   /** Sky lighting intensity */
@@ -78,6 +86,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterWaveStrength: 1,
     waterNormalStrength: 1,
     waterRefractionStrength: 1,
+    waterDetailEnabled: true,
+    waterWaveLayers: 5,
+    waterNormalLayers: 3,
+    waterFoamEnabled: true,
     skyEnvResolution: 256,
     skyEnvIntensity: 0.65,
     realisticSky: true,
@@ -105,6 +117,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterWaveStrength: .9,
     waterNormalStrength: .92,
     waterRefractionStrength: .85,
+    waterDetailEnabled: true,
+    waterWaveLayers: 4,
+    waterNormalLayers: 3,
+    waterFoamEnabled: true,
     skyEnvResolution: 256,
     skyEnvIntensity: 0.65,
     realisticSky: true,
@@ -132,6 +148,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterWaveStrength: .62,
     waterNormalStrength: .72,
     waterRefractionStrength: .38,
+    waterDetailEnabled: true,
+    waterWaveLayers: 3,
+    waterNormalLayers: 2,
+    waterFoamEnabled: true,
     skyEnvResolution: 128,
     skyEnvIntensity: 0.65,
     realisticSky: true,
@@ -154,11 +174,15 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     msaaSamples: 0,
     waterResolution: 256,
     waterReflectionCadence: 1000 / 12,
-    waterReflectionEnabled: true,
+    waterReflectionEnabled: false,
     waterGeometrySegments: 36,
     waterWaveStrength: .32,
     waterNormalStrength: .46,
     waterRefractionStrength: .12,
+    waterDetailEnabled: false,
+    waterWaveLayers: 1,
+    waterNormalLayers: 1,
+    waterFoamEnabled: false,
     skyEnvResolution: 128,
     skyEnvIntensity: 0.5,
     realisticSky: true,
@@ -186,6 +210,10 @@ export const GRAPHICS_PRESETS: Record<GraphicsPreset, GraphicsConfig> = {
     waterWaveStrength: .16,
     waterNormalStrength: .22,
     waterRefractionStrength: 0,
+    waterDetailEnabled: false,
+    waterWaveLayers: 0,
+    waterNormalLayers: 0,
+    waterFoamEnabled: false,
     skyEnvResolution: 64,
     skyEnvIntensity: 0.4,
     realisticSky: false,
@@ -383,6 +411,16 @@ export function GraphicsProvider({ children }: { children: React.ReactNode }) {
     setPresetState(profileToPreset(deviceProfile));
     autoDowngrades.current = 0;
   }, [deviceProfile]);
+
+  useEffect(() => {
+    const handlePreviewPreset = (event: Event) => {
+      const presetName = (event as CustomEvent<string>).detail;
+      if (PRESET_ORDER.includes(presetName as GraphicsPreset)) setPreset(presetName as GraphicsPreset);
+      if (presetName === "auto") resumeAuto();
+    };
+    window.addEventListener("ascend-preview-preset", handlePreviewPreset);
+    return () => window.removeEventListener("ascend-preview-preset", handlePreviewPreset);
+  }, [resumeAuto, setPreset]);
 
   // FPS-based auto downgrade/upgrade
   const handleFps = useCallback((fps: number) => {

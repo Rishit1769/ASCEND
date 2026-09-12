@@ -56,11 +56,41 @@ export default function TidalWater() {
     normal.needsUpdate = true;
     const resolution = config.waterResolution;
     const segments = config.waterGeometrySegments;
-    const reflector = new Reflector(new THREE.PlaneGeometry(160, 160, segments, segments), { textureWidth: resolution, textureHeight: resolution, clipBias: .003, multisample: 0 });
+    const geometry = new THREE.PlaneGeometry(160, 160, segments, segments);
+    const reflector = config.waterReflectionEnabled
+      ? new Reflector(geometry, { textureWidth: resolution, textureHeight: resolution, clipBias: .003, multisample: 0 })
+      : new THREE.Mesh(geometry, new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        fog: true,
+        vertexShader: "void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
+        fragmentShader: "void main(){gl_FragColor=vec4(.18,.35,.37,.72);}",
+      }));
     reflector.name = "shallow-coastal-water";
     reflector.rotation.x = -Math.PI / 2;
     reflector.position.set(0, SEA_LEVEL, -25);
     const material = reflector.material as THREE.ShaderMaterial;
+    const reflectionSample = config.waterReflectionEnabled ? `
+        vec2 uv=projected.xy/projected.w+n.xz*(.011+.012*refractionStrength);
+        float roughness=.24+.16*sin(worldPoint.x*.43+worldPoint.z*.3+time*.15);
+        vec2 spread=vec2(texel*(1.2+roughness*3.));
+        vec3 reflected=texture2D(tDiffuse,uv).rgb*.38;
+        reflected+=(texture2D(tDiffuse,uv+vec2(spread.x,0)).rgb+texture2D(tDiffuse,uv-vec2(spread.x,0)).rgb+texture2D(tDiffuse,uv+vec2(0,spread.y)).rgb+texture2D(tDiffuse,uv-vec2(0,spread.y)).rgb)*.155;
+        vec3 horizonReflection=mix(skyTint,vec3(1.,.88,.68),pow(max(dot(normalize(sun+view),n),0.),18.)*.18);
+        vec3 reflection=mix(horizonReflection,reflected,reflectionStrength);` : `
+        vec3 reflection=skyTint;`;
+    const normalLayers = config.waterNormalLayers >= 3 ? `
+        vec3 b=texture2D(normalMap,flowB).xyz*2.-1.;
+        vec3 c=texture2D(normalMap,flowC).xyz*2.-1.;` : config.waterNormalLayers === 2 ? `
+        vec3 b=texture2D(normalMap,flowB).xyz*2.-1.;
+        vec3 c=vec3(0.);` : `
+        vec3 b=vec3(0.); vec3 c=vec3(0.);`;
+    const foam = config.waterFoamEnabled ? `
+        float shore=1.-smoothstep(.045,.34,depth);
+        float foamNoise=smoothstep(.48,.9,a.x*.45+b.y*.35+c.x*.2+.5);
+        float foam=max(shore*foamNoise*.24,waveCrest*smoothstep(.32,.78,depth)*.13);` : `
+        float shore=0.;
+        float foam=0.;`;
     material.transparent = true;
     material.depthWrite = false;
     material.fog = true;
@@ -87,11 +117,12 @@ export default function TidalWater() {
         vec3 displaced=position;
         vec2 p=(modelMatrix*vec4(position,1.)).xz;
         float w1=wave(vec2(.78,.25),22.,.36,.115,p);
-        float w2=wave(vec2(-.35,.94),12.,.58,.065,p);
-        float w3=wave(vec2(.28,-.96),7.2,.82,.032,p);
-        float w4=wave(vec2(-.88,-.48),3.4,1.34,.014,p);
-        float longSwell=w1+w2+w3+w4;
-        displaced.z += (cos(dot(normalize(vec2(.78,.25)),p)*.285+time*.36)*.045 + cos(dot(normalize(vec2(-.35,.94)),p)*.52+time*.58)*.022) * waveStrength;
+        float w2=${config.waterWaveLayers >= 2 ? "wave(vec2(-.35,.94),12.,.58,.065,p)" : "0."};
+        float w3=${config.waterWaveLayers >= 3 ? "wave(vec2(.28,-.96),7.2,.82,.032,p)" : "0."};
+        float w4=${config.waterWaveLayers >= 4 ? "wave(vec2(-.88,-.48),3.4,1.34,.014,p)" : "0."};
+        float w5=${config.waterWaveLayers >= 5 ? "wave(vec2(.92,-.18),2.2,1.7,.009,p)" : "0."};
+        float longSwell=w1+w2+w3+w4+w5;
+        displaced.z += ${config.waterWaveLayers > 0 ? "(cos(dot(normalize(vec2(.78,.25)),p)*.285+time*.36)*.045 + cos(dot(normalize(vec2(-.35,.94)),p)*.52+time*.58)*.022) * waveStrength" : "0."};
         displaced.y += longSwell * waveStrength;
         waveCrest=smoothstep(.055,.17,longSwell*waveStrength);
         vec4 world= modelMatrix*vec4(displaced,1.);
@@ -112,19 +143,12 @@ export default function TidalWater() {
         vec2 flowA=worldPoint.xz*.115+vec2(time*.018,time*.006);
         vec2 flowB=mat2(.62,-.78,.78,.62)*worldPoint.xz*.255+vec2(-time*.011,time*.017);
         vec2 flowC=worldPoint.zx*.62+vec2(time*.031,-time*.021);
-        vec3 a=texture2D(normalMap,flowA).xyz*2.-1.;
-        vec3 b=texture2D(normalMap,flowB).xyz*2.-1.;
-        vec3 c=texture2D(normalMap,flowC).xyz*2.-1.;
+        vec3 a=${config.waterNormalLayers > 0 ? "texture2D(normalMap,flowA).xyz*2.-1." : "vec3(0.)"};
+        ${normalLayers}
         vec3 n=normalize(vec3((a.x*.7+b.y*.55+c.x*.18)*.145*normalStrength,1.,(a.y*.68+b.x*.52+c.y*.16)*.145*normalStrength));
         vec3 view=normalize(cameraPosition-worldPoint);
         float fresnel=.02+.98*pow(1.-max(dot(view,n),0.),5.);
-        vec2 uv=projected.xy/projected.w+n.xz*(.011+.012*refractionStrength);
-        float roughness=.24+.16*sin(worldPoint.x*.43+worldPoint.z*.3+time*.15);
-        vec2 spread=vec2(texel*(1.2+roughness*3.));
-        vec3 reflected=texture2D(tDiffuse,uv).rgb*.38;
-        reflected+=(texture2D(tDiffuse,uv+vec2(spread.x,0)).rgb+texture2D(tDiffuse,uv-vec2(spread.x,0)).rgb+texture2D(tDiffuse,uv+vec2(0,spread.y)).rgb+texture2D(tDiffuse,uv-vec2(0,spread.y)).rgb)*.155;
-        vec3 horizonReflection=mix(skyTint,vec3(1.,.88,.68),pow(max(dot(normalize(sun+view),n),0.),18.)*.18);
-        vec3 reflection=mix(horizonReflection,reflected,reflectionStrength);
+        ${reflectionSample}
         float floorY=${SEABED_Y.toFixed(2)}+texture2D(depthMap,(worldPoint.xz-vec2(-45.,-65.))/90.).r*8.;
         float depth=max(0.,worldPoint.y-floorY);
         float absorption=1.-exp(-depth*1.22);
@@ -133,9 +157,7 @@ export default function TidalWater() {
         float lambert=.68+.32*max(dot(n,normalize(sun)),0.);
         vec3 body=depthColor*lambert;
         float glint=pow(max(dot(normalize(sun+view),n),0.),180.)*.22;
-        float shore=1.-smoothstep(.045,.34,depth);
-        float foamNoise=smoothstep(.48,.9,a.x*.45+b.y*.35+c.x*.2+.5);
-        float foam=max(shore*foamNoise*.24,waveCrest*smoothstep(.32,.78,depth)*.13);
+        ${foam}
         vec3 color=mix(body,reflection,clamp(fresnel*(.62+.28*reflectionStrength),0.,.92))+vec3(1.,.9,.68)*glint;
         color=mix(color,vec3(.74,.82,.78),foam);
         float alpha=clamp(.13+absorption*.64+fresnel*.5+shore*.04,0.,.96);
@@ -145,9 +167,9 @@ export default function TidalWater() {
         #include <fog_fragment>
       }`;
     material.needsUpdate = true;
-    reflector.onBeforeRender = reflectionUpdater(reflector, config.waterReflectionEnabled, config.waterReflectionCadence);
+    if (config.waterReflectionEnabled) reflector.onBeforeRender = reflectionUpdater(reflector as Reflector, true, config.waterReflectionCadence);
     return reflector;
-  }, [config.waterResolution, config.waterGeometrySegments, config.waterWaveStrength, config.waterNormalStrength, config.waterReflectionEnabled, config.waterReflectionCadence, config.waterRefractionStrength, normals, bathymetry]);
+  }, [config.waterResolution, config.waterGeometrySegments, config.waterWaveStrength, config.waterNormalStrength, config.waterReflectionEnabled, config.waterReflectionCadence, config.waterRefractionStrength, config.waterWaveLayers, config.waterNormalLayers, config.waterFoamEnabled, normals, bathymetry]);
   useEffect(() => () => {
     (water.material as THREE.ShaderMaterial).uniforms.normalMap.value.dispose();
     water.dispose(); water.geometry.dispose();
@@ -156,7 +178,7 @@ export default function TidalWater() {
     applyProps(water.userData, { frame: (water.userData.frame ?? 0) + 1 });
     const time = (water.material as THREE.ShaderMaterial).uniforms.time;
     if (!reduced) applyProps(time, { value: time.value + Math.min(delta, .05) });
-    if (process.env.NODE_ENV === "development" && water.userData.frame % 60 === 0) gl.domElement.dataset.waterState = JSON.stringify({ time: time.value, resolution: water.getRenderTarget().width, reflections: water.userData.reflectionUpdates, segments: config.waterGeometrySegments, realtimeReflection: config.waterReflectionEnabled });
+    if (process.env.NODE_ENV === "development" && water.userData.frame % 60 === 0) gl.domElement.dataset.waterState = JSON.stringify({ time: time.value, resolution: config.waterReflectionEnabled ? (water as Reflector).getRenderTarget().width : 0, reflections: water.userData.reflectionUpdates ?? 0, segments: config.waterGeometrySegments, realtimeReflection: config.waterReflectionEnabled, detail: config.waterDetailEnabled, normalLayers: config.waterNormalLayers, waveLayers: config.waterWaveLayers, foam: config.waterFoamEnabled });
   });
   return <primitive object={water} dispose={null} />;
 }

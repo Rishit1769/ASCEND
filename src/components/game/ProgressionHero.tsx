@@ -11,7 +11,7 @@ import { findDryGround } from "./grounding";
 import { useReducedMotion } from "./useReducedMotion";
 
 export default function ProgressionHero() {
-  const { level } = useWorldProgress();
+  const { level, preview, reloadCounter, previewAnimation } = useWorldProgress();
   const { checkpoint, region } = resolveWorld(level);
   const terrain = useTerrainSurface();
   const controls = useThree(state => state.controls) as OrbitControlsImpl | null;
@@ -42,12 +42,18 @@ export default function ProgressionHero() {
     points.push(destination.clone());
     if (points.length === 2) points.splice(1, 0, start.clone().lerp(destination, .5));
     const curve = new CatmullRomCurve3(points, false, "centripetal");
-    if (first || reducedMotion || previous >= level) {
+    if (first || preview || reducedMotion || previous >= level) {
       root.current.position.copy(destination);
       travel.current = null;
     } else travel.current = { curve, elapsed: 0, duration: Math.max(1, curve.getLength() / 1.6) };
     prior.current = level;
-  }, [level, region.id, destination, terrain, reducedMotion]);
+  }, [level, region.id, destination, terrain, reducedMotion, preview, reloadCounter]);
+
+  useEffect(() => {
+    const reset = () => { initialized.current = false; };
+    window.addEventListener("ascend-reset-camera", reset);
+    return () => window.removeEventListener("ascend-reset-camera", reset);
+  }, []);
 
   useFrame((state, delta) => {
     const camera = state.camera;
@@ -81,5 +87,5 @@ export default function ProgressionHero() {
     if (process.env.NODE_ENV === "development") state.gl.domElement.dataset.worldState = JSON.stringify({ level, region: region.id, checkpoint: checkpoint.id, moving: !!movement, position: hero.position.toArray(), camera: camera.position.toArray() });
   }, -.5);
   // Hero's sole solver reads world coordinates, while the outer group owns translation.
-  return <group ref={root}><Hero animation={walking ? "WALK_player_Root" : "FIGHTIDLE_Root"} /></group>;
+  return <group ref={root}><Hero animation={preview ? previewAnimation : walking ? "WALK_player_Root" : "FIGHTIDLE_Root"} /></group>;
 }
