@@ -7,6 +7,7 @@ import AmbientParticles from "./AmbientParticles";
 import Ruins from "./Ruins";
 import Terrain from "./Terrain";
 import { useReducedMotion } from "./useReducedMotion";
+import { useGraphicsQuality } from "./GraphicsQuality";
 
 export type EnvironmentRegion =
   | "forgotten_shore"
@@ -22,6 +23,7 @@ interface EnvironmentProps {
 
 export default function Environment({ region = "forgotten_shore" }: EnvironmentProps) {
   const reducedMotion = useReducedMotion();
+  const quality = useGraphicsQuality();
 
   if (region !== "forgotten_shore") {
     return null;
@@ -33,7 +35,7 @@ export default function Environment({ region = "forgotten_shore" }: EnvironmentP
       <DistantMountain />
       <Ruins />
       <FogLayers reducedMotion={reducedMotion} />
-      <AmbientParticles reducedMotion={reducedMotion} />
+      {quality !== "low" && <AmbientParticles reducedMotion={reducedMotion} />}
       <DistantFires reducedMotion={reducedMotion} />
     </group>
   );

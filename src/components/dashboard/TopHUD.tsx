@@ -11,66 +11,111 @@ interface TopHUDProps {
 export default function TopHUD({ player }: TopHUDProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       className="pointer-events-auto absolute top-0 left-0 right-0 z-20 flex items-start justify-between px-4 py-3 sm:px-6 sm:py-4 md:px-10 md:py-5"
     >
       {/* ─── Left: Branding ─────────────────────────────── */}
       <div className="flex flex-col">
-        <span className="text-[11px] font-bold tracking-[0.35em] text-gold/90 uppercase sm:text-xs">
+        <span
+          className="text-[11px] font-bold uppercase sm:text-xs"
+          style={{
+            color: "var(--color-forge-text-active)",
+            letterSpacing: "0.3em",
+            textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+          }}
+        >
           ASCEND
         </span>
-        <span className="hidden text-[9px] tracking-[0.2em] text-ash/40 sm:inline">
+        <span
+          className="hidden sm:inline"
+          style={{
+            fontSize: "9px",
+            letterSpacing: "0.18em",
+            color: "var(--color-forge-text)",
+            opacity: 0.45,
+          }}
+        >
           YOUR LIFE · YOUR QUEST · YOUR LEVEL
         </span>
       </div>
 
       {/* ─── Right: Stats & Controls ────────────────────── */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Streak */}
         <motion.div
-          whileHover={{ scale: 1.03 }}
-          className="flex items-center gap-1.5 rounded border border-white/[0.06] bg-white/[0.04] px-2.5 py-1.5 backdrop-blur-md sm:gap-2 sm:px-3"
+          whileHover={{ scale: 1.02 }}
+          className="forge-counter flex items-center gap-1.5 px-2.5 py-1.5 sm:gap-2 sm:px-3"
+          style={{ clipPath: "polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))" }}
         >
-          <Flame className="h-3 w-3 text-crimson sm:h-3.5 sm:w-3.5" />
-          <span className="text-[11px] font-bold tabular-nums text-bone sm:text-xs">
+          <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: "#8b3a1a" }} />
+          <span
+            className="text-[11px] font-bold tabular-nums sm:text-xs"
+            style={{ color: "var(--color-forge-text-hover)" }}
+          >
             {player.streak}
           </span>
-          <span className="hidden text-[9px] text-ash/60 sm:inline">streak</span>
+          <span
+            className="hidden sm:inline"
+            style={{ fontSize: "9px", color: "var(--color-forge-text)", opacity: 0.5 }}
+          >
+            streak
+          </span>
         </motion.div>
 
         {/* Gold */}
         <motion.div
-          whileHover={{ scale: 1.03 }}
-          className="flex items-center gap-1.5 rounded border border-white/[0.06] bg-white/[0.04] px-2.5 py-1.5 backdrop-blur-md sm:gap-2 sm:px-3"
+          whileHover={{ scale: 1.02 }}
+          className="forge-counter flex items-center gap-1.5 px-2.5 py-1.5 sm:gap-2 sm:px-3"
+          style={{ clipPath: "polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))" }}
         >
-          <Trophy className="h-3 w-3 text-gold sm:h-3.5 sm:w-3.5" />
-          <span className="text-[11px] font-bold tabular-nums text-gold sm:text-xs">
+          <Trophy className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: "var(--color-forge-text-active)" }} />
+          <span
+            className="text-[11px] font-bold tabular-nums sm:text-xs"
+            style={{ color: "var(--color-forge-text-active)" }}
+          >
             {player.gold}
           </span>
-          <span className="hidden text-[9px] text-ash/60 sm:inline">gold</span>
+          <span
+            className="hidden sm:inline"
+            style={{ fontSize: "9px", color: "var(--color-forge-text)", opacity: 0.5 }}
+          >
+            gold
+          </span>
         </motion.div>
 
         {/* Divider */}
-        <div className="mx-1 hidden h-5 w-px bg-white/[0.06] sm:block" />
+        <div
+          className="forge-divider mx-0.5 hidden h-5 w-px sm:block"
+        />
 
         {/* Profile */}
         <motion.button
-          whileHover={{ scale: 1.08 }}
+          whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
           aria-label="Profile"
-          className="flex h-8 w-8 items-center justify-center rounded border border-white/[0.06] bg-white/[0.04] text-ash/60 transition-colors hover:border-gold/30 hover:text-bone backdrop-blur-md"
+          className="forge-icon-btn flex h-8 w-8 items-center justify-center"
+          style={{
+            color: "var(--color-forge-text)",
+            opacity: 0.6,
+            clipPath: "polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))",
+          }}
         >
           <User className="h-3.5 w-3.5" />
         </motion.button>
 
         {/* Settings */}
         <motion.button
-          whileHover={{ scale: 1.08 }}
+          whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
           aria-label="Settings"
-          className="flex h-8 w-8 items-center justify-center rounded border border-white/[0.06] bg-white/[0.04] text-ash/60 transition-colors hover:border-gold/30 hover:text-bone backdrop-blur-md"
+          className="forge-icon-btn flex h-8 w-8 items-center justify-center"
+          style={{
+            color: "var(--color-forge-text)",
+            opacity: 0.6,
+            clipPath: "polygon(0 0, calc(100% - 3px) 0, 100% 3px, 100% 100%, 3px 100%, 0 calc(100% - 3px))",
+          }}
         >
           <Settings className="h-3.5 w-3.5" />
         </motion.button>

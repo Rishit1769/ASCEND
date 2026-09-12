@@ -1,13 +1,16 @@
 "use client";
+import { useMemo } from "react";
+import { Object3D } from "three";
+import { useGraphicsQuality } from "./GraphicsQuality";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 // Lighting — adjust intensities/colors to taste.
-const AMBIENT_INTENSITY = 1.2; // Global fill (lower = moodier shadows)
-const AMBIENT_COLOR = "#9AAAC2";
+const AMBIENT_INTENSITY = 0.8;
+const AMBIENT_COLOR = "#a6c5dc";
 
-const KEY_LIGHT_INTENSITY = 2.5; // Moonlit primary light
-const KEY_LIGHT_POSITION: [number, number, number] = [5, 10, 6];
-const KEY_LIGHT_COLOR = "#9bbce0";
+const KEY_LIGHT_INTENSITY = 2.8;
+const KEY_LIGHT_POSITION: [number, number, number] = [14, 23, -8];
+const KEY_LIGHT_COLOR = "#ffe9c8";
 
 const FILL_LIGHT_INTENSITY = 0.72; // Warm distant fire fill
 const FILL_LIGHT_POSITION: [number, number, number] = [-3, 2, 2];
@@ -19,25 +22,31 @@ const RIM_LIGHT_COLOR = "#8AA7C7";
 // ───────────────────────────────────────────────────────────────────
 
 export default function SceneLighting() {
+  const quality = useGraphicsQuality();
+  const target = useMemo(() => { const object = new Object3D(); object.position.set(0, 0, -12); return object; }, []);
   return (
     <>
+      <primitive object={target} />
       {/* Global fill — lifts everything out of pure black */}
       <hemisphereLight intensity={AMBIENT_INTENSITY} color={AMBIENT_COLOR} groundColor="#30271f" />
 
       {/* Key light — main character illumination from upper-right */}
       <directionalLight
+        key={quality}
         position={KEY_LIGHT_POSITION}
         intensity={KEY_LIGHT_INTENSITY}
         color={KEY_LIGHT_COLOR}
+        target={target}
         castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-12}
-        shadow-camera-right={12}
-        shadow-camera-top={12}
-        shadow-camera-bottom={-12}
-        shadow-camera-far={50}
+        shadow-mapSize={quality === "high" ? [2048, 2048] : quality === "medium" ? [1024, 1024] : [512, 512]}
+        shadow-camera-left={-21}
+        shadow-camera-right={21}
+        shadow-camera-top={21}
+        shadow-camera-bottom={-21}
+        shadow-camera-far={75}
         shadow-bias={-0.0002}
-        shadow-normalBias={0.03}
+        shadow-normalBias={0.045}
+        shadow-radius={2}
       />
 
       {/* Fill light — warm gold from the left for depth */}

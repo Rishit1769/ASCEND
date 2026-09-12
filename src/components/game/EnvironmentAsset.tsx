@@ -1,8 +1,10 @@
 "use client";
 
-import { Component, type ReactNode, useLayoutEffect, useMemo, useRef } from "react";
+import { Component, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Detailed, useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { normalizeAsset, useGroundHeight } from "./terrainSurface";
 
 type Placement = { position: [number, number, number]; scale?: number; rotation?: number };
 interface AssetProps {
@@ -14,6 +16,55 @@ interface AssetProps {
   rotation?: number;
   low?: boolean;
   ground?: boolean;
+  castShadow?: boolean;
+  tint?: string;
+  surface?: boolean;
+}
+
+function useArtMaterial(id: string, tint = "#ffffff") {
+  const gl = useThree(state => state.gl);
+  return useMemo(() => (source: THREE.Material) => {
+    const material = source.clone();
+    if (!(material instanceof THREE.MeshStandardMaterial)) return material;
+    material.color.multiply(new THREE.Color(tint));
+    const stone = /cliff|rocks|rock_moss|fort/.test(id);
+    if (stone) {
+      material.metalness = 0;
+      material.normalScale.multiplyScalar(1.12);
+      material.aoMapIntensity = 0.8;
+      for (const key of ["map", "normalMap", "roughnessMap", "aoMap"] as const) {
+        const texture = material[key];
+        if (texture) {
+          texture.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
+          texture.needsUpdate = true;
+        }
+      }
+      material.onBeforeCompile = shader => {
+        shader.vertexShader = shader.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 artPosition;")
+          .replace("#include <worldpos_vertex>", `#include <worldpos_vertex>
+            vec4 artLocal = vec4(transformed, 1.0);
+            #ifdef USE_INSTANCING
+              artLocal = instanceMatrix * artLocal;
+            #endif
+            artPosition = (modelMatrix * artLocal).xyz;`);
+        shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 artPosition;")
+          .replace("#include <color_fragment>", `#include <color_fragment>
+            float weather = sin(artPosition.x * .73 + sin(artPosition.z * .51)) * sin(artPosition.z * .31 + artPosition.y);
+            diffuseColor.rgb *= mix(vec3(.82, .86, .83), vec3(1.04, 1.01, .96), weather * .5 + .5);
+            ${id === "coast_rocks_01" ? `
+              float pathCenter = sin(artPosition.z * .23) * .65;
+              float path = (1.-smoothstep(.55, 1.8, abs(artPosition.x-pathCenter) + weather*.2)) * smoothstep(-26.,-22.,artPosition.z);
+              float stoneLuma = dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));
+              diffuseColor.rgb = mix(diffuseColor.rgb, vec3(stoneLuma)*vec3(1.24,1.16,1.0)+vec3(.018,.014,.008),path*.65);
+            ` : ""}`)
+          .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
+            float damp = (1.0 - smoothstep(-1.7, -.8, artPosition.y)) * smoothstep(.2, .7, weather);
+            roughnessFactor = max(roughnessFactor, mix(.86, .48, damp));`);
+      };
+      material.customProgramCacheKey = () => "shore-weathering-v2-" + id;
+    }
+    return material;
+  }, [gl, id, tint]);
 }
 
 /* ─── Error boundary — silences missing-GLB crashes ────────────── */
@@ -30,58 +81,65 @@ class AssetErrorBoundary extends Component<{ children: ReactNode; fallback: Reac
 }
 
 /* ─── Inner: loads a single GLB via useGLTF ────────────────────── */
-function AssetRoot({ id, part, width, height, low, ground }: AssetProps) {
+function AssetRoot({ id, part, width, height, low, ground, castShadow, tint }: AssetProps) {
   const url = "/environment/" + id + (low ? "-lod" : "") + ".glb";
   const { scene } = useGLTF(url);
+  const artMaterial = useArtMaterial(id, tint);
 
   const model = useMemo(() => {
     const source = part ? scene.getObjectByName(part) : scene;
     if (!source) return null;
-    const clone = source.clone(true);
-    const root = new THREE.Group();
-    root.add(clone);
-    root.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(root);
-    const size = box.getSize(new THREE.Vector3());
-    const factor = height ? height / size.y : (width ?? size.x) / size.x;
-    const center = box.getCenter(new THREE.Vector3());
-    clone.position.sub(new THREE.Vector3(center.x, box.min.y, center.z));
-    root.scale.setScalar(factor);
-    root.updateMatrixWorld(true);
-    if (ground) {
-      const ray = new THREE.Raycaster(new THREE.Vector3(0, 100, 0), new THREE.Vector3(0, -1, 0));
-      const hit = ray.intersectObject(root, true)[0];
-      if (hit) clone.position.y -= hit.point.y / factor;
-    }
+    const root = normalizeAsset(source, width, height, ground);
+    const materials = new Map<THREE.Material, THREE.Material>();
     root.traverse(child => {
-      if (child instanceof THREE.Mesh) child.receiveShadow = true;
+      if (child instanceof THREE.Mesh) {
+        child.receiveShadow = true;
+        child.castShadow = !!castShadow;
+        const convert = (m: THREE.Material) => {
+          if (!materials.has(m)) materials.set(m, artMaterial(m));
+          return materials.get(m)!;
+        };
+        child.material = Array.isArray(child.material) ? child.material.map(convert) : convert(child.material);
+      }
     });
     root.updateMatrixWorld(true);
     return root;
-  }, [scene, part, width, height, ground]);
+  }, [scene, part, width, height, ground, castShadow, artMaterial]);
+  useEffect(() => () => {
+    const materials = new Set<THREE.Material>();
+    model?.traverse(child => {
+      if (child instanceof THREE.Mesh) (Array.isArray(child.material) ? child.material : [child.material]).forEach(m => materials.add(m));
+    });
+    materials.forEach(m => m.dispose());
+  }, [model]);
 
   if (!model) return null;
   return <primitive object={model} dispose={null} />;
 }
 
 /* ─── Inner: loads GLB and extracts meshes for instancing ───────── */
-function ScatterRoot({ id, part, low, placements }: AssetProps & { placements: Placement[] }) {
+function ScatterRoot({ id, part, low, placements, width, height, surface, castShadow, tint }: AssetProps & { placements: Placement[] }) {
   const url = "/environment/" + id + (low ? "-lod" : "") + ".glb";
   const { scene } = useGLTF(url);
+  const groundHeight = useGroundHeight();
+  const adjusted = useMemo(() => placements.map(p => ({ ...p, position: [p.position[0], surface ? groundHeight(p.position[0], p.position[2]) - 0.04 : p.position[1], p.position[2]] as [number, number, number] })), [placements, surface, groundHeight]);
 
   const meshes = useMemo(() => {
     const source = part ? scene.getObjectByName(part) : scene;
     if (!source) return [];
     const result: THREE.Mesh[] = [];
-    source.traverse(child => { if (child instanceof THREE.Mesh) result.push(child); });
+    normalizeAsset(source, width, height).traverse(child => { if (child instanceof THREE.Mesh) result.push(child); });
     return result;
-  }, [scene, part]);
+  }, [scene, part, width, height]);
 
-  return <>{meshes.map(mesh => <MeshInstances key={mesh.uuid} mesh={mesh} placements={placements} />)}</>;
+  return <>{meshes.map(mesh => <MeshInstances key={mesh.uuid} id={id} tint={tint} castShadow={castShadow} mesh={mesh} placements={adjusted} />)}</>;
 }
 
-function MeshInstances({ mesh, placements }: { mesh: THREE.Mesh; placements: Placement[] }) {
+function MeshInstances({ mesh, placements, id, castShadow, tint }: { mesh: THREE.Mesh; placements: Placement[]; id: string; castShadow?: boolean; tint?: string }) {
   const ref = useRef<THREE.InstancedMesh>(null);
+  const convert = useArtMaterial(id, tint);
+  const material = useMemo(() => Array.isArray(mesh.material) ? mesh.material.map(convert) : convert(mesh.material), [mesh.material, convert]);
+  useEffect(() => () => (Array.isArray(material) ? material : [material]).forEach(m => m.dispose()), [material]);
   useLayoutEffect(() => {
     if (!ref.current) return;
     const transform = new THREE.Object3D();
@@ -93,11 +151,13 @@ function MeshInstances({ mesh, placements }: { mesh: THREE.Mesh; placements: Pla
       transform.updateMatrix();
       matrix.multiplyMatrices(transform.matrix, mesh.matrixWorld);
       ref.current!.setMatrixAt(index, matrix);
+      ref.current!.setColorAt(index, new THREE.Color().setRGB(0.90 + (index % 4) * .025, 0.94 + (index % 3) * .02, 0.88 + (index % 5) * .025));
     });
     ref.current.instanceMatrix.needsUpdate = true;
+    if (ref.current.instanceColor) ref.current.instanceColor.needsUpdate = true;
     ref.current.computeBoundingSphere();
   }, [mesh, placements]);
-  return <instancedMesh ref={ref} args={[mesh.geometry, mesh.material, placements.length]} receiveShadow dispose={null} />;
+  return <instancedMesh ref={ref} args={[mesh.geometry, material, placements.length]} castShadow={castShadow} receiveShadow dispose={null} />;
 }
 
 /* ─── Public exports — each wrapped in error boundary ───────────── */
