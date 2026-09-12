@@ -7,12 +7,10 @@ import * as THREE from "three";
 // ─── Tweakable constants ───────────────────────────────────────────
 // Adjust these to fit your GLB character on screen.
 const MODEL_PATH = "/models/armored_king.glb";
-const HERO_SCALE = 3;                           // Overall model size
-const HERO_POSITION: [number, number, number] = [0, -1.4, 0];  // Y raised so feet are visible
-const HERO_ROTATION: [number, number, number] = [0, Math.PI, 0]; // Y=PI to face camera
 
-const TARGET_ANIMATION = "FIGHTIDLE_Root";
-const FALLBACK_KEYWORDS = ["idle", "fight", "stand", "breath"];
+const HERO_SCALE = 1.5;                          // Character size (reduce if too large)
+const HERO_POSITION: [number, number, number] = [0, -1.6, 0]; // Vertical offset (lower = feet more visible)
+const HERO_ROTATION: [number, number, number] = [0, Math.PI, 0]; // Y rotation (PI = facing camera)
 // ───────────────────────────────────────────────────────────────────
 
 interface HeroProps {
@@ -30,28 +28,54 @@ export default function Hero({
   const { scene, animations } = useGLTF(MODEL_PATH);
   const { names, actions } = useAnimations(animations, group);
 
-  const activeAnimation = useMemo(() => {
-    if (names.length === 0) return null;
-
-    const exactMatch = names.find((n) => n === TARGET_ANIMATION);
-    if (exactMatch) return exactMatch;
-
-    for (const keyword of FALLBACK_KEYWORDS) {
-      const match = names.find((n) => n.toLowerCase().includes(keyword));
-      if (match) return match;
-    }
-
-    return names[0];
+  // Log available animations once on mount
+  useEffect(() => {
+    console.log("[ASCEND] Available animations:", names);
   }, [names]);
 
-  useEffect(() => {
-    if (activeAnimation && actions[activeAnimation]) {
-      actions[activeAnimation].reset().fadeIn(0.5).play();
-      console.log("[ASCEND] Playing animation:", activeAnimation);
-      console.log("[ASCEND] Available clips:", names);
-    }
-  }, [activeAnimation, actions, names]);
+  // Select idle animation: prefer exact match, then case-insensitive "idle" substring
+  const idleName = useMemo(() => {
+    if (names.length === 0) return null;
 
+    // Priority order for exact matches
+    const exactPriority = ["Idle", "idle", "Idle Animation"];
+    for (const candidate of exactPriority) {
+      if (names.includes(candidate)) return candidate;
+    }
+
+    // Fallback: first name containing "idle" (case-insensitive)
+    const fallback = names.find((n) => n.toLowerCase().includes("idle"));
+    if (fallback) return fallback;
+
+    // Last resort: no idle found
+    console.warn("[ASCEND] No idle animation found. Available:", names);
+    return null;
+  }, [names]);
+
+  // Play idle animation with loop and cleanup
+  useEffect(() => {
+    if (!idleName || !actions[idleName]) {
+      if (animations.length === 0) {
+        console.warn("[ASCEND] No animations found in hero GLB.");
+      }
+      return;
+    }
+
+    const action = actions[idleName];
+    action
+      .reset()
+      .setLoop(THREE.LoopRepeat, Infinity)
+      .fadeIn(0.4)
+      .play();
+
+    console.log("[ASCEND] Playing idle animation:", idleName);
+
+    return () => {
+      action.fadeOut(0.3);
+    };
+  }, [idleName, actions, animations.length]);
+
+  // Enable shadows on all meshes
   useEffect(() => {
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {

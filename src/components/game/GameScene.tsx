@@ -9,9 +9,9 @@ import ErrorBoundary from "./ErrorBoundary";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 // Camera framing — controls how the character is composed on screen.
-// Closer Z = larger character, wider FOV = more environment.
-const CAMERA_POSITION: [number, number, number] = [0, 1.2, 3.5];
-const CAMERA_FOV = 35;
+// Z farther = smaller character, higher Y = looking slightly down.
+const CAMERA_POSITION: [number, number, number] = [0, 1.6, 7]; // Camera distance from hero
+const CAMERA_FOV = 40; // Field of view (wider = more environment visible)
 // ───────────────────────────────────────────────────────────────────
 
 function WireframeFallback() {
