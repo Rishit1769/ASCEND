@@ -8,8 +8,8 @@ import * as THREE from "three";
 // Adjust these to fit your GLB character on screen.
 const MODEL_PATH = "/models/armored_king.glb";
 
-const HERO_SCALE = 1.5;                          // Character size (reduce if too large)
-const HERO_POSITION: [number, number, number] = [0, -1.6, 0]; // Vertical offset (lower = feet more visible)
+const HERO_SCALE = 1.2;                          // Character size (reduce if legs still cut off)
+const HERO_POSITION: [number, number, number] = [0, 0.3, 0]; // Raise hero higher so full body is visible
 const HERO_ROTATION: [number, number, number] = [0, Math.PI, 0]; // Y rotation (PI = facing camera)
 // ───────────────────────────────────────────────────────────────────
 
