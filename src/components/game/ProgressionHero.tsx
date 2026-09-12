@@ -77,8 +77,8 @@ export default function ProgressionHero() {
       if (t === 1) { travel.current = null; setWalking(false); }
     } else if (walking) setWalking(false);
     if (!movement) hero.rotation.y += (0 - hero.rotation.y) * (1 - Math.exp(-delta * 5));
-    const mountainComposition = region.id === "mountains-of-trial";
-    target.current.set(0, mountainComposition ? 2.4 : region.id === "forest-of-resolve" ? 1.8 : 1, 0).add(hero.position);
+    const realmComposition = region.id === "realm-of-ascension";
+    target.current.set(0, realmComposition ? 2.2 : region.id === "forest-of-resolve" ? 1.8 : 1, 0).add(hero.position);
     if (controls) {
       if (!initialized.current) {
         cameraOffset.current.fromArray(checkpoint.cameraOffset);
@@ -86,7 +86,7 @@ export default function ProgressionHero() {
         const terrainHit = terrain(camera.position.x, camera.position.z);
         const clearance = camera.position.y - terrainHit.point.y;
         if (clearance < 1.2) camera.position.y = terrainHit.point.y + 1.2;
-        if (process.env.NODE_ENV === "development" && region.id === "mountains-of-trial") {
+        if (process.env.NODE_ENV === "development" && region.id === "realm-of-ascension") {
           console.info("[CameraSafety] LEVEL 13 CHECKPOINT", {
             heroPosition: hero.position.toArray(),
             cameraPosition: camera.position.toArray(),
@@ -104,7 +104,7 @@ export default function ProgressionHero() {
         camera.position.add(targetDelta.current);
       }
       controls.target.copy(target.current);
-      if (!mountainComposition) {
+      if (!realmComposition) {
       const beforeOrbit = terrain(camera.position.x, camera.position.z);
       camera.position.y = Math.max(camera.position.y, beforeOrbit.point.y + 1.2);
       controls.update();

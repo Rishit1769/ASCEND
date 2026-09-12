@@ -17,7 +17,7 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
   const info = resolveWorld(selected);
   const next = current.checkpoint.nextCheckpoint ? resolveWorld(current.checkpoint.nextCheckpoint) : null;
   const nextRegion = WORLD_REGIONS[WORLD_REGIONS.indexOf(current.region) + 1];
-  const status = selected < level ? "Completed" : selected === Math.min(level, 31) ? "Current location" : "Locked";
+  const status = selected < level ? "Completed" : selected === current.checkpoint.level ? "Current location" : "Locked";
   function center(behavior: ScrollBehavior = "smooth") {
     const node = viewport.current?.querySelector<HTMLElement>(`[data-level="${current.checkpoint.level}"]`);
     const view = viewport.current;
@@ -87,14 +87,14 @@ export default function WorldMap({ onClose }: { onClose: () => void }) {
       </div>
       <div className="map-tools"><button title="Zoom in" aria-label="Zoom in" onClick={() => setZoom(z => Math.min(2, z + .2))}><Plus size={18} /></button><button title="Zoom out" aria-label="Zoom out" onClick={() => setZoom(z => Math.max(.65, z - .2))}><Minus size={18} /></button><button title="Center on player" aria-label="Center on player" onClick={() => { setSelected(current.checkpoint.level); center(); }}><Crosshair size={18} /></button></div>
       <aside className="map-details" aria-live="polite">
-        <p className="map-status">{status === "Locked" && <LockKeyhole size={12} />} {status} · Level {selected === 31 && level > 31 ? level : selected}</p>
+        <p className="map-status">{status === "Locked" && <LockKeyhole size={12} />} {status} · Level {selected === current.checkpoint.level && level > 26 ? level : selected}</p>
         <h3>{info.checkpoint.name}</h3><p>{info.region.name}</p><p>{info.checkpoint.description}</p>
         {status === "Locked" && <p>Required: Reach Level {selected}</p>}
         <hr /><p>{info.region.theme}</p><p>{levelRange(info.region)} · {Math.max(0, Math.min(info.region.checkpoints.length, level - info.region.levelStart + 1))}/{info.region.checkpoints.length} checkpoints reached</p>
         <div className="map-region-points">{info.region.checkpoints.map(point => <button key={point.id} onClick={() => setSelected(point.level)} aria-pressed={selected === point.level}>{point.level}. {point.name}</button>)}</div>
         <hr /><p className="map-status">Next checkpoint</p><p>{next ? `Level ${next.checkpoint.level} · ${next.checkpoint.name}` : "The Summit · Legacy continues"}</p>
         {nextRegion && <><p className="map-status">Next region</p><p>{nextRegion.name}<br />{levelRange(nextRegion)}</p></>}
-        <p className="map-status">Ultimate destination</p><p>The Summit · Level 31+</p>
+        <p className="map-status">Ultimate destination</p><p>The Summit · Level 26+</p>
       </aside>
     </div>
   </dialog>;

@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { normalizeLevel, resolveWorld, WORLD_CHECKPOINTS, WORLD_REGIONS } from "@/lib/world";
+import { levelRange, normalizeLevel, resolveWorld, WORLD_CHECKPOINTS, WORLD_REGIONS } from "@/lib/world";
 
 type WorldContextValue = { level: number; preview: boolean; previewLevel: number | null; reloadCounter: number; previewAnimation: string; setPreviewLevel: (level: number) => void; exitPreview: () => void; reloadRegion: () => void; setPreviewAnimation: (animation: string) => void };
 const WorldContext = createContext<WorldContextValue>({ level: 1, preview: false, previewLevel: null, reloadCounter: 0, previewAnimation: "FIGHTIDLE_Root", setPreviewLevel: () => {}, exitPreview: () => {}, reloadRegion: () => {}, setPreviewAnimation: () => {} });
@@ -51,7 +51,7 @@ export function WorldLocation() {
   const { level, preview } = useWorldProgress();
   const { region, checkpoint } = resolveWorld(level);
   return <div className="pointer-events-none absolute inset-x-16 top-24 text-center text-white/90 sm:top-20" aria-live="polite">
-    <p className="text-xs uppercase">{region.name}</p>
+    <p className="text-xs uppercase">{region.name} · {levelRange(region)}</p>
     <p className="text-[11px] text-white/65">Level {level} · {checkpoint.name}{preview ? " · Preview" : ""}</p>
   </div>;
 }

@@ -11,7 +11,7 @@ import { useGraphicsQuality } from "./GraphicsQuality";
 import TidalWater from "./TidalWater";
 import type { RegionSlug } from "@/types/game";
 import ForestOfResolve from "./ForestOfResolve";
-import MountainsOfTrial from "./MountainsOfTrial";
+import RealmOfAscension from "./RealmOfAscension";
 
 interface EnvironmentProps {
   region?: RegionSlug;
@@ -22,7 +22,7 @@ export default function Environment({ region = "forgotten-shore" }: EnvironmentP
   const { config } = useGraphicsQuality();
 
   if (region === "forest-of-resolve") return <ForestOfResolve />;
-  if (region === "mountains-of-trial") return <MountainsOfTrial />;
+  if (region === "realm-of-ascension") return <RealmOfAscension />;
   if (region !== "forgotten-shore") {
     return null;
   }

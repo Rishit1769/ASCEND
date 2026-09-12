@@ -19,7 +19,6 @@ export interface PlayerData {
 export type RegionSlug =
   | "forgotten-shore"
   | "forest-of-resolve"
-  | "mountains-of-trial"
   | "temple-of-knowledge"
   | "realm-of-ascension"
   | "celestial-heights"

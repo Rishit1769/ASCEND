@@ -19,7 +19,7 @@ import RealisticSky from "./RealisticSky";
 import { CoastalTerrainProvider } from "./terrainSurface";
 import { ForestSurface } from "./ForestOfResolve/ForestSurface";
 import ForestLighting from "./ForestOfResolve/ForestLighting";
-import { MountainSurface } from "./MountainsOfTrial/MountainSurface";
+import { RealmSurface } from "./RealmOfAscension/RealmSurface";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 const CAMERA_POSITION: [number, number, number] = [0, 1.7, 7.2];
@@ -82,7 +82,7 @@ function RegionReady({ onReady, regionKey }: { onReady: (key: string) => void; r
 function SceneContent({ onReady }: { onReady: (key: string) => void }) {
   const { level, reloadCounter } = useWorldProgress();
   const { region } = resolveWorld(level);
-  const Surface = region.id === "forest-of-resolve" ? ForestSurface : region.id === "mountains-of-trial" ? MountainSurface : CoastalTerrainProvider;
+  const Surface = region.id === "forest-of-resolve" ? ForestSurface : region.id === "realm-of-ascension" ? RealmSurface : CoastalTerrainProvider;
   useEffect(() => {
     console.info("[World] Resolved region:", region.id);
     console.info("[RegionManager] Loading:", region.id);
@@ -118,7 +118,7 @@ function Scene() {
       <Canvas
         shadows={config.shadowsEnabled ? { type: PCFShadowMap } : undefined}
         camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV, near: .25, far: 1000 }}
-        style={{ pointerEvents: "auto", cursor: "grab", background: region.id === "mountains-of-trial" ? "#526975" : undefined }}
+        style={{ pointerEvents: "auto", cursor: "grab" }}
         gl={{
           antialias: true,
           alpha: true,
@@ -129,11 +129,10 @@ function Scene() {
         dpr={config.dprMax}
         onCreated={handleCreated}
       >
-        {region.id === "mountains-of-trial" && <color attach="background" args={["#526975"]} />}
-        {region.id === "forest-of-resolve" ? <ForestLighting /> : region.id === "mountains-of-trial" ? null : <SceneLighting />}
+        {region.id === "forest-of-resolve" ? <ForestLighting /> : <SceneLighting />}
         {process.env.NODE_ENV === "development" && <SceneStats />}
 
-        {config.realisticSky ? (
+        {config.realisticSky && region.id !== "realm-of-ascension" ? (
           <Suspense fallback={<AtmosphericSky />}>
             <RealisticSky />
             <SkyLighting
@@ -158,10 +157,10 @@ function Scene() {
           enablePan={false}
           enableZoom={true}
           enableRotate={true}
-          minDistance={region.id === "mountains-of-trial" ? 5.5 : ORBIT_MIN_DISTANCE}
-          maxDistance={region.id === "mountains-of-trial" ? 42 : ORBIT_MAX_DISTANCE}
-          minPolarAngle={region.id === "mountains-of-trial" ? .42 : ORBIT_MIN_POLAR}
-          maxPolarAngle={region.id === "mountains-of-trial" ? 1.42 : Math.min(ORBIT_MAX_POLAR, Math.PI / 2 - .04)}
+          minDistance={region.id === "realm-of-ascension" ? 6 : ORBIT_MIN_DISTANCE}
+          maxDistance={region.id === "realm-of-ascension" ? 28 : ORBIT_MAX_DISTANCE}
+          minPolarAngle={region.id === "realm-of-ascension" ? .48 : ORBIT_MIN_POLAR}
+          maxPolarAngle={region.id === "realm-of-ascension" ? 1.38 : Math.min(ORBIT_MAX_POLAR, Math.PI / 2 - .04)}
           enableDamping={true}
           dampingFactor={0.05}
         />

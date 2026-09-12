@@ -36,7 +36,10 @@ const b = normalizeAsset(far.scene, 36);
 b.position.set(0, -1.8, -22); b.rotation.y = Math.PI;
 const sample = createGroundSampler([a, b]);
 assert(Math.abs(sample(0, 0).point.y + 1.08) < .001);
-assert.equal(WORLD_CHECKPOINTS.length, 31);
+assert.equal(WORLD_CHECKPOINTS.length, 26);
+assert.equal(resolveWorld(11).region.id, "realm-of-ascension");
+assert.equal(resolveWorld(15).checkpoint.name, "Ascension Throne");
+assert.equal(resolveWorld(21).region.id, "celestial-heights");
 for (const region of WORLD_REGIONS) {
   assert.equal(resolveWorld(region.levelStart).region.id, region.id);
   if (Number.isFinite(region.levelEnd)) assert.equal(resolveWorld(region.levelEnd).region.id, region.id);
