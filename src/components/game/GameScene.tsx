@@ -7,6 +7,13 @@ import SceneLighting from "./SceneLighting";
 import SceneFallback from "./SceneFallback";
 import ErrorBoundary from "./ErrorBoundary";
 
+// ─── Tweakable constants ───────────────────────────────────────────
+// Camera framing — controls how the character is composed on screen.
+// Closer Z = larger character, wider FOV = more environment.
+const CAMERA_POSITION: [number, number, number] = [0, 1.2, 3.5];
+const CAMERA_FOV = 35;
+// ───────────────────────────────────────────────────────────────────
+
 function WireframeFallback() {
   return (
     <mesh position={[0, 0, 0]}>
@@ -20,7 +27,7 @@ function SceneContent() {
   return (
     <ErrorBoundary fallback={<WireframeFallback />}>
       <Suspense fallback={<WireframeFallback />}>
-        <Hero scale={1} position={[0, -1.5, 0]} rotation={[0, 0, 0]} />
+        <Hero />
       </Suspense>
     </ErrorBoundary>
   );
@@ -35,7 +42,7 @@ export default function GameScene() {
     <div className="pointer-events-none absolute inset-0 z-0">
       <SceneFallback />
       <Canvas
-        camera={{ position: [0, 1.5, 5], fov: 40 }}
+        camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV }}
         style={{ pointerEvents: "none" }}
         gl={{ antialias: true, alpha: true }}
         dpr={[1, 1.5]}
