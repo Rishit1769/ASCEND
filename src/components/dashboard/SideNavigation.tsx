@@ -39,9 +39,9 @@ export default function SideNavigation() {
       initial="hidden"
       animate="visible"
       aria-label="Main navigation"
-      className="pointer-events-auto absolute left-4 top-1/2 z-20 -translate-y-1/2 md:left-8"
+      className="pointer-events-auto absolute left-3 top-1/2 z-20 -translate-y-1/2 sm:left-5 md:left-8"
     >
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = active === item.id;
@@ -53,16 +53,31 @@ export default function SideNavigation() {
               onClick={() => setActive(item.id)}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
-              className={`group flex items-center gap-3 rounded border px-3 py-2.5 text-left transition-all duration-200 ${
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.97 }}
+              className={`group relative flex items-center gap-3 rounded-r border-l-2 px-3 py-2.5 text-left transition-all duration-200 sm:gap-3.5 sm:px-4 ${
                 isActive
-                  ? "border-gold/40 bg-gold/10 text-gold"
-                  : "border-transparent bg-transparent text-ash hover:border-stone/40 hover:bg-abyss/40 hover:text-bone"
+                  ? "border-gold/70 bg-gold/[0.07] text-gold nav-active-glow"
+                  : "border-transparent bg-transparent text-ash/70 hover:border-stone/40 hover:bg-white/[0.03] hover:text-bone/90"
               }`}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="hidden text-xs font-semibold uppercase tracking-wider md:inline">
+              <Icon className={`h-4 w-4 shrink-0 transition-colors duration-200 ${
+                isActive ? "text-gold" : "text-ash/50 group-hover:text-ash"
+              }`} />
+              <span className={`hidden text-[11px] font-semibold uppercase tracking-wider transition-colors duration-200 md:inline ${
+                isActive ? "text-gold" : ""
+              }`}>
                 {item.label}
               </span>
+
+              {isActive && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute inset-0 rounded-r border-l-2 border-gold/70 bg-gold/[0.07]"
+                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  style={{ zIndex: -1 }}
+                />
+              )}
             </motion.button>
           );
         })}

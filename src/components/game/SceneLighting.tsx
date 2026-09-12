@@ -2,19 +2,19 @@
 
 // ─── Tweakable constants ───────────────────────────────────────────
 // Lighting — adjust intensities/colors to taste.
-const AMBIENT_INTENSITY = 1.2; // Global fill (lower = moodier shadows)
+const AMBIENT_INTENSITY = 0.72; // Global fill (lower = moodier shadows)
 const AMBIENT_COLOR = "#c8c8e0";
 
-const KEY_LIGHT_INTENSITY = 2.5; // Main illumination (lower = more dramatic)
-const KEY_LIGHT_POSITION: [number, number, number] = [5, 8, 5]; // Upper-right key light
-const KEY_LIGHT_COLOR = "#f0e8d8";
+const KEY_LIGHT_INTENSITY = 1.85; // Moonlit primary light
+const KEY_LIGHT_POSITION: [number, number, number] = [4, 7, 5];
+const KEY_LIGHT_COLOR = "#c2cce4";
 
-const FILL_LIGHT_INTENSITY = 1.2; // Warm fill from left
-const FILL_LIGHT_POSITION: [number, number, number] = [-3, 4, 3];
+const FILL_LIGHT_INTENSITY = 0.65; // Warm distant fire fill
+const FILL_LIGHT_POSITION: [number, number, number] = [-3, 2, 2];
 const FILL_LIGHT_COLOR = "#d4a543";
 
-const RIM_LIGHT_INTENSITY = 0.8; // Back/edge light for separation
-const RIM_LIGHT_POSITION: [number, number, number] = [0, 3, -3];
+const RIM_LIGHT_INTENSITY = 1.1; // Cool back/edge light for separation
+const RIM_LIGHT_POSITION: [number, number, number] = [0, 3, -4];
 const RIM_LIGHT_COLOR = "#a0a0c0";
 // ───────────────────────────────────────────────────────────────────
 

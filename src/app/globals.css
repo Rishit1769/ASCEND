@@ -35,6 +35,7 @@ body {
   font-family: var(--font-sans);
 }
 
+/* ─── Scrollbar ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -46,6 +47,7 @@ body {
   border-radius: 2px;
 }
 
+/* ─── Animations ─────────────────────────────────────────────────── */
 @keyframes pulse-gold {
   0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
@@ -56,17 +58,79 @@ body {
   100% { background-position: 200% 0; }
 }
 
+@keyframes glow-line {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+  100% { opacity: 0.3; }
+}
+
+@keyframes level-pulse {
+  0%, 100% { text-shadow: 0 0 4px rgba(212, 165, 67, 0.3); }
+  50% { text-shadow: 0 0 12px rgba(212, 165, 67, 0.6); }
+}
+
 .animate-pulse-gold {
   animation: pulse-gold 2s ease-in-out infinite;
+}
+
+.animate-level-pulse {
+  animation: level-pulse 3s ease-in-out infinite;
 }
 
 .xp-shimmer {
   background: linear-gradient(
     90deg,
     var(--color-xp-violet) 0%,
-    #a78bfa 50%,
+    #a78bfa 40%,
+    #c4b5fd 50%,
+    #a78bfa 60%,
     var(--color-xp-violet) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 3s ease-in-out infinite;
+}
+
+/* ─── HUD Panel Glass ────────────────────────────────────────────── */
+.hud-panel {
+  background: linear-gradient(
+    135deg,
+    rgba(13, 13, 26, 0.75) 0%,
+    rgba(8, 8, 16, 0.85) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ─── Active nav indicator ───────────────────────────────────────── */
+.nav-active-glow {
+  box-shadow:
+    inset 0 0 12px rgba(212, 165, 67, 0.08),
+    0 0 8px rgba(212, 165, 67, 0.06);
+}
+
+/* ─── XP bar track with inner shadow ─────────────────────────────── */
+.xp-track {
+  background: linear-gradient(
+    180deg,
+    rgba(26, 26, 46, 0.9) 0%,
+    rgba(13, 13, 26, 0.95) 100%
+  );
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Cursor states for 3D canvas interaction ────────────────────── */
+.canvas-interactive {
+  cursor: grab;
+}
+.canvas-interactive:active {
+  cursor: grabbing;
+}
+
+/* ─── Prefers reduced motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-gold,
+  .animate-level-pulse,
+  .xp-shimmer {
+    animation: none;
+  }
 }

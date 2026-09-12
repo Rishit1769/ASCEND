@@ -17,37 +17,50 @@ export default function PlayerProgress({ player }: PlayerProgressProps) {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, delay: 0.4, ease: "easeOut" }}
-      className="pointer-events-auto absolute bottom-6 left-1/2 z-20 w-[min(400px,80vw)] -translate-x-1/2 md:bottom-10"
+      className="pointer-events-auto absolute bottom-4 left-1/2 z-20 w-[min(380px,85vw)] -translate-x-1/2 sm:bottom-6 md:bottom-10 md:w-[min(420px,70vw)]"
     >
-      <div className="rounded border border-stone/30 bg-abyss/70 px-5 py-4 backdrop-blur-md">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="text-[10px] uppercase tracking-widest text-ash">
+      <div className="hud-panel rounded border border-white/[0.06] px-4 py-3 sm:px-5 sm:py-3.5 md:px-6 md:py-4">
+        {/* ─── Level + Region row ──────────────────────── */}
+        <div className="mb-2.5 flex items-baseline justify-between sm:mb-3">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-ash/50 sm:text-[10px]">
               Level
             </span>
-            <span className="text-2xl font-bold text-gold">
+            <motion.span
+              key={player.level}
+              initial={{ scale: 1.3, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="animate-level-pulse text-xl font-black tabular-nums text-gold sm:text-2xl"
+            >
               {player.level}
-            </span>
+            </motion.span>
           </div>
-          <span className="text-[10px] tracking-wider text-mist">
+          <span className="text-[9px] font-medium tracking-wider text-ash/50 sm:text-[10px]">
             {region.name}
           </span>
         </div>
 
-        <div className="relative mb-2 h-2.5 w-full overflow-hidden rounded-full bg-charcoal">
+        {/* ─── XP Bar ──────────────────────────────────── */}
+        <div className="relative mb-2 h-2 w-full overflow-hidden rounded-full xp-track sm:h-2.5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${xpPercent}%` }}
             transition={{ duration: 1.2, delay: 0.6, ease: "easeOut" }}
             className="absolute inset-y-0 left-0 rounded-full xp-shimmer"
           />
+          {/* Top highlight line */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
         </div>
 
-        <div className="flex items-center justify-between text-[10px]">
-          <span className="text-mist">
-            {player.xp} / {player.xpRequired} XP
+        {/* ─── XP numeric row ──────────────────────────── */}
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] tabular-nums text-ash/50 sm:text-[10px]">
+            {player.xp.toLocaleString()} / {player.xpRequired.toLocaleString()} XP
           </span>
-          <span className="text-mist">{xpPercent}%</span>
+          <span className="text-[9px] tabular-nums text-ash/40 sm:text-[10px]">
+            {xpPercent}%
+          </span>
         </div>
       </div>
     </motion.div>
