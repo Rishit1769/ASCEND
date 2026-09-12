@@ -9,6 +9,7 @@ import { useWorldProgress } from "./WorldProgress";
 import { useTerrainSurface } from "./terrainSurface";
 import { findDryGround } from "./grounding";
 import { useReducedMotion } from "./useReducedMotion";
+import { REALM_CAMERA } from "./RealmOfAscension/realmConfig";
 
 export default function ProgressionHero() {
   const { level, preview, reloadCounter, previewAnimation } = useWorldProgress();
@@ -26,6 +27,7 @@ export default function ProgressionHero() {
   const targetDelta = useRef(new Vector3());
   const cameraOffset = useRef(new Vector3());
   const initialized = useRef(false);
+  const frameLog = useRef(0);
 
   useEffect(() => {
     if (!root.current) return;
@@ -78,10 +80,20 @@ export default function ProgressionHero() {
     } else if (walking) setWalking(false);
     if (!movement) hero.rotation.y += (0 - hero.rotation.y) * (1 - Math.exp(-delta * 5));
     const realmComposition = region.id === "realm-of-ascension";
-    target.current.set(0, realmComposition ? Math.max(1.4, 5.8 - (level - 11) * 1.1) : region.id === "forest-of-resolve" ? 1.8 : 1, 0).add(hero.position);
+    if (realmComposition) {
+      // Authored cinematic third-person framing (see REALM_CAMERA): the camera
+      // sits up and slightly to the side, aiming forward along the walkway.
+      target.current.set(
+        hero.position.x + REALM_CAMERA.target[0],
+        hero.position.y + REALM_CAMERA.target[1],
+        hero.position.z + REALM_CAMERA.target[2]
+      );
+    } else {
+      target.current.set(0, region.id === "forest-of-resolve" ? 1.8 : 1, 0).add(hero.position);
+    }
     if (controls) {
       if (!initialized.current) {
-        cameraOffset.current.fromArray(checkpoint.cameraOffset);
+        cameraOffset.current.fromArray(realmComposition ? REALM_CAMERA.offset : checkpoint.cameraOffset);
         camera.position.copy(hero.position).add(cameraOffset.current);
         const terrainHit = terrain(camera.position.x, camera.position.z);
         const clearance = camera.position.y - terrainHit.point.y;
@@ -116,6 +128,10 @@ export default function ProgressionHero() {
       }
       } else controls.update();
       lastTarget.current.copy(target.current);
+    }
+    if (process.env.NODE_ENV === "development" && region.id === "realm-of-ascension" && frameLog.current < 4) {
+      frameLog.current++;
+      console.info("[RealmCam]", frameLog.current, "init", initialized.current, "hero", hero.position.toArray().map(n => +n.toFixed(2)), "cam", camera.position.toArray().map(n => +n.toFixed(2)), "target", target.current.toArray().map(n => +n.toFixed(2)));
     }
     if (process.env.NODE_ENV === "development") state.gl.domElement.dataset.worldState = JSON.stringify({ level, region: region.id, checkpoint: checkpoint.id, moving: !!movement, position: hero.position.toArray(), camera: camera.position.toArray() });
   }, -.5);

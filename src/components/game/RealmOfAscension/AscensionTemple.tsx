@@ -29,7 +29,7 @@ export default function AscensionTemple() {
   }, []);
   return <group name="ascension-temple">
     <mesh geometry={arch} position={[0, 12.5, -51.55]} castShadow receiveShadow userData={{ realmObstacle: true }}>
-      <meshStandardMaterial color={PALETTE.stone} roughness={.78} />
+      <meshStandardMaterial color={PALETTE.stone} roughness={.72} />
     </mesh>
     <Batch parts={structure.stone} shadow obstacle />
     <Batch parts={structure.columns} shape="column" shadow obstacle />
@@ -40,14 +40,16 @@ export default function AscensionTemple() {
     <Batch shape="cone" parts={[-6.6, 6.6].map(x => ({ p: [x, 26, -56], s: [6, 3, 6] }))} />
     <Batch shape="cone" material="gold" parts={[{ p: [0, 32.2, -57], s: [5.5, 4, 5.5] }]} />
     <Batch material="glow" parts={[{ p: [0, 27, -54.48], s: [.3, 4.5, .05] }]} />
+    {/* Temple entrance glow plane — warm golden light */}
     <mesh position={[0, 10.8, -60.2]}>
       <planeGeometry args={[6.4, 9]} />
       <shaderMaterial transparent depthWrite={false} uniforms={{}} vertexShader="varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}"
         fragmentShader="varying vec2 v;void main(){float a=smoothstep(0.,.22,v.x)*smoothstep(0.,.22,1.-v.x);gl_FragColor=vec4(1.,.83,.49,a*.85);}" />
     </mesh>
+    {/* Ascension beam — subtle vertical golden-white */}
     <mesh position={[0, 42, -57]}>
       <cylinderGeometry args={[.25, 1.1, 22, 16, 1, true]} />
-      <meshBasicMaterial color={PALETTE.light} transparent opacity={.08} depthWrite={false} />
+      <meshBasicMaterial color={PALETTE.warmGlow} transparent opacity={.15} depthWrite={false} />
     </mesh>
     <Batch material="gold" shape="ring" parts={[{ p: [0, 17, -50], s: [1.15, 1.15, 1] }]} />
   </group>;

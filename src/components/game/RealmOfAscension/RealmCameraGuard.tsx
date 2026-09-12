@@ -5,7 +5,7 @@ import { Mesh, Raycaster, Vector3, type Intersection, type Object3D } from "thre
 import type { OrbitControls } from "three-stdlib";
 import { realmHeight } from "./realmConfig";
 export default function RealmCameraGuard() {
-  const storage = useRef({ ray: new Raycaster(), direction: new Vector3(), objects: [] as Object3D[], hits: [] as Intersection[] });
+  const storage = useRef({ ray: new Raycaster(), direction: new Vector3(), objects: [] as Object3D[], hits: [] as Intersection[], logged: false });
   useFrame(({ scene, camera, controls, gl }) => {
     const scratch = storage.current;
     const orbit = controls as OrbitControls | undefined;
@@ -21,7 +21,13 @@ export default function RealmCameraGuard() {
     scratch.hits.length = 0;
     scratch.ray.intersectObjects(scratch.objects, false, scratch.hits);
     const hit = scratch.hits[0];
-    if (hit && hit.distance < distance + .65) camera.position.copy(orbit.target).addScaledVector(scratch.direction, Math.max(.8, hit.distance - .65));
+    if (hit && hit.distance < distance + .65) {
+      if (process.env.NODE_ENV === "development" && !scratch.logged) {
+        scratch.logged = true;
+        console.info("[RealmCamGuard] push", { dist: +hit.distance.toFixed(2), point: hit.point.toArray().map(n => +n.toFixed(2)), type: hit.object.type, instanced: (hit.object as unknown as { isInstancedMesh?: boolean }).isInstancedMesh, instanceId: hit.instanceId, geo: hit.object.geometry?.type, uuid: hit.object.uuid, target: orbit.target.toArray().map(n => +n.toFixed(2)), camera: camera.position.toArray().map(n => +n.toFixed(2)) });
+      }
+      camera.position.copy(orbit.target).addScaledVector(scratch.direction, Math.max(.8, hit.distance - .65));
+    }
     camera.position.y = Math.max(camera.position.y, Math.max(.3, realmHeight(camera.position.x, camera.position.z)) + 1.1);
     camera.lookAt(orbit.target);
     if (process.env.NODE_ENV === "development") gl.domElement.dataset.realmCamera = JSON.stringify({ clearance: camera.position.y - realmHeight(camera.position.x, camera.position.z), obstructed: !!hit, camera: camera.position.toArray(), target: orbit.target.toArray(), hit: hit?.distance });

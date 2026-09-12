@@ -30,7 +30,7 @@ export default function FloatingIslands() {
     <Batch parts={positions.map(([x, y, z]) => ({ p: [x, y + 5, z], s: [2.5, 7, 2.5] }))} />
     <Batch parts={positions.map(([x, y, z]) => ({ p: [x, y + 9.5, z], s: [3.5, 2, 3.5] }))} material="gold" shape="cone" />
     {positions.slice(0, 4).map(([x, y, z]) => <Waterfall key={x} x={x + 4} y={y + 1} z={z + 3} />)}
-    <Batch shape="cloud" material="flower" parts={Array.from({ length: quality.clouds }, (_, i) => {
+    <Batch shape="cloud" material="shade" parts={Array.from({ length: quality.clouds }, (_, i) => {
       const a = i * Math.PI * 2 / quality.clouds;
       return { p: [Math.cos(a) * 72, -23 - i % 3, -30 + Math.sin(a) * 82], s: [65, 5, 40] };
     })} />

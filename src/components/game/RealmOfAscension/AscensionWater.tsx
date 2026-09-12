@@ -14,7 +14,7 @@ export default function AscensionWater() {
   return <group name="simple-ascension-pools">{[-1, 1].map(side =>
     <mesh key={side} position={[side * 10.6, -.12, -16]} rotation-x={-Math.PI / 2}>
       <planeGeometry args={[14.8, 28]} />
-      {preset === "potato" ? <meshBasicMaterial color={PALETTE.water} transparent opacity={.6} depthWrite={false} /> :
-        <meshStandardMaterial color={PALETTE.water} roughness={.32} metalness={.12} transparent opacity={.66} depthWrite={false} />}
+      {preset === "potato" ? <meshBasicMaterial color={PALETTE.water} transparent opacity={.7} depthWrite={false} /> :
+        <meshStandardMaterial color={PALETTE.water} roughness={.28} metalness={.15} transparent opacity={.72} depthWrite={false} />}
     </mesh>)}</group>;
 }

@@ -37,7 +37,7 @@ export default function AscensionGardens() {
   return <group name="ascension-gardens-and-banners">
     {[-1, 1].map(side => <mesh key={side} rotation-x={-Math.PI / 2} position={[side * 15, 6.32, -59]}>
       <circleGeometry args={[1.8, 32]} />
-      <meshStandardMaterial color={PALETTE.water} roughness={.26} metalness={.15} />
+      <meshStandardMaterial color={PALETTE.waterMid} roughness={.28} metalness={.12} />
     </mesh>)}
     <Batch parts={parts.trees} shape="foliage" material="green" shadow />
     <Batch parts={parts.trunks} material="dark" shape="column" />

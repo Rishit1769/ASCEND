@@ -19,7 +19,12 @@ export default function SceneEffects() {
         />
       )}
       {config.bloomEnabled && (
-        <Bloom intensity={0.12} luminanceThreshold={1.3} luminanceSmoothing={0.35} mipmapBlur />
+        <Bloom
+          intensity={0.35}
+          luminanceThreshold={1.0}
+          luminanceSmoothing={0.4}
+          mipmapBlur
+        />
       )}
       {config.fxaaEnabled && <FXAA />}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />

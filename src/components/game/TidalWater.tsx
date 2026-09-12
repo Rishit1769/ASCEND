@@ -76,8 +76,8 @@ export default function TidalWater({ forest = false, realm = false }: { forest?:
     const material = reflector.material as THREE.ShaderMaterial;
     const reflectionSample = config.waterReflectionEnabled ? `
         vec2 uv=projected.xy/projected.w+n.xz*(.011+.012*refractionStrength);
-        float roughness=.24+.16*sin(worldPoint.x*.43+worldPoint.z*.3+time*.15);
-        vec2 spread=vec2(texel*(1.2+roughness*3.));
+        float roughness=${realm ? ".22+.06*sin(worldPoint.x*.33+worldPoint.z*.24+time*.06)" : ".24+.16*sin(worldPoint.x*.43+worldPoint.z*.3+time*.15)"};
+        vec2 spread=vec2(texel*(1.2+roughness*${realm ? "1.8" : "3."}));
         vec3 reflected=texture2D(tDiffuse,uv).rgb*.38;
         reflected+=(texture2D(tDiffuse,uv+vec2(spread.x,0)).rgb+texture2D(tDiffuse,uv-vec2(spread.x,0)).rgb+texture2D(tDiffuse,uv+vec2(0,spread.y)).rgb+texture2D(tDiffuse,uv-vec2(0,spread.y)).rgb)*.155;
         vec3 horizonReflection=mix(skyTint,vec3(1.,.88,.68),pow(max(dot(normalize(sun+view),n),0.),18.)*.18);
@@ -100,13 +100,16 @@ export default function TidalWater({ forest = false, realm = false }: { forest?:
     material.fog = true;
     Object.assign(material.uniforms, THREE.UniformsUtils.clone(THREE.UniformsLib.fog), {
       normalMap: { value: normal }, depthMap: { value: bathymetry }, time: { value: 0 }, sun: { value: realm ? new THREE.Vector3(35, 65, 48).normalize() : SUN_DIRECTION },
-      shallow: { value: new THREE.Color(realm ? "#79b9c7" : forest ? "#587365" : "#496c68") }, deep: { value: new THREE.Color(realm ? "#315d70" : forest ? "#182e29" : "#162b2f") },
-      mid: { value: new THREE.Color(realm ? "#4c8fa8" : forest ? "#314e43" : "#315d61") }, skyTint: { value: new THREE.Color(realm ? "#c8e0f0" : forest ? "#72887e" : "#9db7c1") },
+      shallow: { value: new THREE.Color(realm ? "#4DB5C8" : forest ? "#587365" : "#496c68") }, deep: { value: new THREE.Color(realm ? "#0B5E78" : forest ? "#182e29" : "#162b2f") },
+      mid: { value: new THREE.Color(realm ? "#178FA8" : forest ? "#314e43" : "#315d61") }, skyTint: { value: new THREE.Color(realm ? "#9fc6dc" : forest ? "#72887e" : "#9db7c1") },
       texel: { value: 1 / Math.max(1, resolution) },
       waveStrength: { value: config.waterWaveStrength * (realm ? .08 : forest ? .18 : 1) },
       normalStrength: { value: config.waterNormalStrength * (realm ? .35 : 1) },
       reflectionStrength: { value: config.waterReflectionEnabled ? 1 : 0 },
       refractionStrength: { value: config.waterRefractionStrength },
+      depthAbsorb: { value: realm ? 2.6 : 1.22 },
+      baseAlpha: { value: realm ? .34 : .13 },
+      reflectivity: { value: realm ? .42 : 1 },
     });
     material.vertexShader = `
       uniform mat4 textureMatrix; uniform float time,waveStrength;
@@ -137,7 +140,7 @@ export default function TidalWater({ forest = false, realm = false }: { forest?:
       }`;
     material.fragmentShader = `
       uniform sampler2D tDiffuse, normalMap, depthMap;
-      uniform float time, texel, normalStrength, reflectionStrength, refractionStrength;
+      uniform float time, texel, normalStrength, reflectionStrength, refractionStrength, depthAbsorb, baseAlpha, reflectivity;
       uniform vec3 shallow, mid, deep, skyTint, sun;
       varying vec4 projected; varying vec3 worldPoint; varying float waveCrest;
       #include <common>
@@ -157,16 +160,16 @@ export default function TidalWater({ forest = false, realm = false }: { forest?:
         ${realm ? "if(abs(worldPoint.x)<3.15 || length(worldPoint.xz-vec2(0.,8.))<10.1)discard;" : ""}
         ${forest ? "if(abs(worldPoint.x)>43. || worldPoint.z < -63. || worldPoint.z > 23.)discard;" : ""}
         float depth=max(0.,worldPoint.y-floorY);
-        float absorption=1.-exp(-depth*1.22);
+        float absorption=1.-exp(-depth*depthAbsorb);
         vec3 depthColor=mix(shallow,mid,smoothstep(.0,.42,absorption));
         depthColor=mix(depthColor,deep,smoothstep(.38,1.,absorption));
         float lambert=.68+.32*max(dot(n,normalize(sun)),0.);
         vec3 body=depthColor*lambert;
-        float glint=pow(max(dot(normalize(sun+view),n),0.),180.)*.22;
+        float glint=pow(max(dot(normalize(sun+view),n),0.),${realm ? "120." : "180."})*${realm ? ".08" : ".22"};
         ${foam}
-        vec3 color=mix(body,reflection,clamp(fresnel*(.62+.28*reflectionStrength),0.,.92))+vec3(1.,.9,.68)*glint;
+        vec3 color=mix(body,reflection,clamp(fresnel*(.62+.28*reflectionStrength)*reflectivity,0.,.92))+vec3(1.,.9,.68)*glint;
         color=mix(color,vec3(.74,.82,.78),foam);
-        float alpha=clamp(.13+absorption*.64+fresnel*.5+shore*.04,0.,.96);
+        float alpha=clamp(baseAlpha+absorption*.6+fresnel*.5*reflectivity+shore*.04,0.,.96);
         gl_FragColor=vec4(color,alpha);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

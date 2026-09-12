@@ -5,7 +5,8 @@ import { PALETTE } from "./realmConfig";
 import { useGraphicsQuality } from "../GraphicsQuality";
 export type Part = { p: [number, number, number]; s: [number, number, number]; r?: [number, number, number] };
 function makeResources() {
-  const stone = new MeshStandardMaterial({ color: PALETTE.stone, roughness: .78 });
+  // Main stone — warm ivory marble with subtle grain
+  const stone = new MeshStandardMaterial({ color: PALETTE.stone, roughness: .72, metalness: .0 });
   stone.onBeforeCompile = shader => {
     shader.vertexShader = shader.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 stonePoint;")
       .replace("#include <begin_vertex>", "#include <begin_vertex>\nstonePoint=position;");
@@ -15,17 +16,31 @@ function makeResources() {
         float vein=sin(stonePoint.y*22.+sin(stonePoint.x*9.+stonePoint.z*13.)*2.);
         diffuseColor.rgb*=.92+grain*.08-smoothstep(.96,1.,vein)*.065;`);
   };
+
+  // Shade — darker recessed stone
+  const shade = new MeshStandardMaterial({ color: PALETTE.shade, roughness: .86, metalness: .0 });
+
+  // Dark — structural/depth stone
+  const dark = new MeshStandardMaterial({ color: PALETTE.darkStone, roughness: .9, metalness: .0 });
+
+  // Gold — rich metallic with low roughness
+  const gold = new MeshStandardMaterial({ color: PALETTE.gold, roughness: .38, metalness: .7 });
+
+  // Green — rich foliage
+  const green = new MeshStandardMaterial({ color: PALETTE.foliage, roughness: .8, metalness: .0 });
+
+  // Flowers — soft lavender
+  const flower = new MeshStandardMaterial({ color: PALETTE.flowers, roughness: .85, metalness: .0 });
+
+  // Glow — warm emissive
+  const glow = new MeshStandardMaterial({ color: PALETTE.warmGlow, emissive: PALETTE.warmGlow, emissiveIntensity: .65, roughness: .5 });
+
+  // Cloth — dark navy banners
+  const cloth = new MeshStandardMaterial({ color: PALETTE.banner, roughness: .95, metalness: .0 });
+
   return {
     geometries: { box: new BoxGeometry(1, 1, 1), column: new CylinderGeometry(.5, .5, 1, 64), cone: new CylinderGeometry(0, .5, 1, 8), ring: new TorusGeometry(1, .012, 4, 96), foliage: new IcosahedronGeometry(.5, 2), cloud: new SphereGeometry(.5, 16, 8) },
-    materials: {
-      stone, shade: new MeshStandardMaterial({ color: PALETTE.shade, roughness: .86 }),
-      dark: new MeshStandardMaterial({ color: PALETTE.darkStone, roughness: .9 }),
-      gold: new MeshStandardMaterial({ color: PALETTE.gold, roughness: .34, metalness: .82 }),
-      green: new MeshStandardMaterial({ color: PALETTE.foliage, roughness: .92 }),
-      flower: new MeshStandardMaterial({ color: PALETTE.flowers, roughness: .85 }),
-      glow: new MeshStandardMaterial({ color: PALETTE.light, emissive: PALETTE.light, emissiveIntensity: .65, roughness: .5 }),
-      cloth: new MeshStandardMaterial({ color: PALETTE.banner, roughness: .95 }),
-    },
+    materials: { stone, shade, dark, gold, green, flower, glow, cloth },
   };
 }
 const Resources = createContext<ReturnType<typeof makeResources> | null>(null);

@@ -21,6 +21,7 @@ import { ForestSurface } from "./ForestOfResolve/ForestSurface";
 import ForestLighting from "./ForestOfResolve/ForestLighting";
 import { RealmSurface } from "./RealmOfAscension/RealmSurface";
 import AscensionAtmosphere, { AscensionLighting } from "./RealmOfAscension/AscensionAtmosphere";
+import { REALM_CAMERA } from "./RealmOfAscension/realmConfig";
 
 // ─── Tweakable constants ───────────────────────────────────────────
 const CAMERA_POSITION: [number, number, number] = [0, 1.7, 7.2];
@@ -118,14 +119,14 @@ function Scene() {
       <SceneFallback />
       <Canvas
         shadows={config.shadowsEnabled ? { type: PCFShadowMap } : undefined}
-        camera={{ position: CAMERA_POSITION, fov: region.id === "realm-of-ascension" ? 50 : CAMERA_FOV, near: .25, far: 1000 }}
+        camera={{ position: CAMERA_POSITION, fov: region.id === "realm-of-ascension" ? REALM_CAMERA.fov : CAMERA_FOV, near: .25, far: 1000 }}
         style={{ pointerEvents: "auto", cursor: "grab" }}
         gl={{
           antialias: true,
           alpha: true,
           outputColorSpace: SRGBColorSpace,
           toneMapping: ACESFilmicToneMapping,
-          toneMappingExposure: 1.1,
+          toneMappingExposure: 0.9,
         }}
         dpr={config.dprMax}
         onCreated={handleCreated}
@@ -133,7 +134,7 @@ function Scene() {
         {region.id === "realm-of-ascension" ? <AscensionLighting /> : region.id === "forest-of-resolve" ? <ForestLighting /> : <SceneLighting />}
         {process.env.NODE_ENV === "development" && <SceneStats />}
 
-        {region.id === "realm-of-ascension" ? <><AscensionAtmosphere /><SkyLighting key="realm-sky" resolution={config.skyEnvResolution} frames={1} environmentIntensity={.5}><AscensionAtmosphere capture /></SkyLighting></> : config.realisticSky ? (
+        {region.id === "realm-of-ascension" ? <><AscensionAtmosphere /><SkyLighting key="realm-sky" resolution={config.skyEnvResolution} frames={1} environmentIntensity={.13}><AscensionAtmosphere capture /></SkyLighting></> : config.realisticSky ? (
           <Suspense fallback={<AtmosphericSky />}>
             <RealisticSky />
             <SkyLighting
