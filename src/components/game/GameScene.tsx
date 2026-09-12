@@ -80,7 +80,7 @@ function SceneContent() {
 
 /* ─── Inner scene that reads from GraphicsContext ────────────────── */
 function Scene() {
-  const { config, preset } = useGraphicsQuality();
+  const { config } = useGraphicsQuality();
 
   const handleCreated = useCallback(() => {
     console.log("[ASCEND] Three.js canvas created");

@@ -185,7 +185,8 @@ function detectDevice(): DeviceProfile {
   }
 
   const cores = navigator.hardwareConcurrency ?? 4;
-  const memory = (navigator as Record<string, unknown>).deviceMemory as number | undefined;
+  // deviceMemory is non-standard but available on some browsers
+  const memory = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? null;
   const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   const dpr = window.devicePixelRatio || 1;
   const width = screen.width;
